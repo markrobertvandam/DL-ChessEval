@@ -1,0 +1,7 @@
+# Exclude IDE files
+.idea
+.vscode
+
+# Exclude application folders
+data
+models
