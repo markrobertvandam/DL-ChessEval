@@ -1,5 +1,4 @@
 import argparse
-import chess
 import csv
 import os
 
@@ -70,12 +69,19 @@ def get_attrs(fen_attrs: str):
     return attrs
 
 
+def get_eval(pos_eval: str) -> np.ndarray:
+    if pos_eval[0] == "#":
+        return np.array([1, int(pos_eval[1:])])
+    else:
+        return np.array([0, int(pos_eval)])
+
+
 def preprocess(data_path: str, save_path: str) -> None:
     with open(data_path, 'r') as file:
         num_fens = sum(1 for _ in file)
         bitmaps = np.empty((num_fens, 8, 8, 12), np.uint8)
         attrs = np.empty((num_fens, 15), np.uint8)
-        evals = np.empty((num_fens, 2), np.int16)
+        pos_evals = np.empty((num_fens, 2), np.int16)
 
     with open(data_path, 'r') as file:
         chess_reader = csv.reader(file)
@@ -89,17 +95,18 @@ def preprocess(data_path: str, save_path: str) -> None:
             fen = row[0].split(" ", 1)
             bitmaps[counter] = get_bitmap(fen[0])
             attrs[counter] = get_attrs(fen[1])
-
-            if row[1][0] == "#":
-                evals[counter] = np.array([1, int(row[1][1:])])
-            else:
-                evals[counter] = np.array([0, int(row[1])])
+            pos_evals[counter] = get_eval(row[1])
 
             counter += 1
 
         print(f'Total rows processed: {counter}')
 
-        np.savez(os.path.join(save_path, "preprocessed_chess_dataset"), bitmaps=bitmaps, attrs=attrs, evals=evals)
+        np.savez(
+            os.path.join(save_path, "preprocessed_chess_dataset"),
+            bitmaps=bitmaps,
+            attrs=attrs,
+            pos_evals=pos_evals
+        )
 
 
 def main() -> None:
