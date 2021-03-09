@@ -40,15 +40,15 @@ class ChessEvaluationModel:
         # Reduce the dimensionality before concatenating
         dense_1 = layers.Dense(500, activation="elu")(flatten)
         merged_layer = keras.layers.concatenate([dense_1, input_numerical])
-        batch_norm_3 = layers.BatchNormalization()(merged_layer)
-        dropout_3 = layers.Dropout(0.3)(batch_norm_3)
+        # batch_norm_3 = layers.BatchNormalization()(merged_layer)
+        # dropout_3 = layers.Dropout(0.3)(batch_norm_3)
 
         # Output evaluation of position
-        output_eval = layers.Dense(1, activation="linear")(dropout_3)
+        output_eval = layers.Dense(1, activation="linear")(merged_layer)
         # Output number of turns to forced mate
-        output_mate = layers.Dense(1, activation="linear")(dropout_3)
+        output_mate = layers.Dense(1, activation="linear")(merged_layer)
         # Output binary representing eval (0) or mate (1)
-        output_binary = layers.Dense(1, activation="sigmoid")(dropout_3)
+        output_binary = layers.Dense(1, activation="sigmoid")(merged_layer)
 
         return models.Model(
             inputs=[input_cnn, input_numerical],
