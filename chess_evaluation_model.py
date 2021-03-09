@@ -1,14 +1,13 @@
-from tensorflow.keras import layers, models, Input
-from tensorflow import keras
 import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow import keras
+from tensorflow.keras import layers, models, Input
+from tensorflow.python.keras.callbacks import History
 
 
 class ChessEvaluationModel:
-    def __init__(self, bitmap_shape: tuple, additional_features_shape: tuple) -> None:
-        # Init model
-        self.model = ChessEvaluationModel.__create_model(
-            bitmap_shape, additional_features_shape
-        )
+    def __init__(self):
+        self.model = None
 
     @staticmethod
     def __create_model(bitmap_shape, additional_features_shape) -> models.Model:
@@ -44,28 +43,48 @@ class ChessEvaluationModel:
         # dropout_3 = layers.Dropout(0.3)(batch_norm_3)
 
         # Output evaluation of position
-        output_eval = layers.Dense(1, activation="linear")(merged_layer)
+        output_eval = layers.Dense(1, activation="linear", name="output_eval")(merged_layer)
         # Output number of turns to forced mate
-        output_mate = layers.Dense(1, activation="linear")(merged_layer)
+        output_mate = layers.Dense(1, activation="linear", name="output_mate")(merged_layer)
         # Output binary representing eval (0) or mate (1)
-        output_binary = layers.Dense(1, activation="sigmoid")(merged_layer)
+        output_binary = layers.Dense(1, activation="sigmoid", name="output_binary")(merged_layer)
 
         return models.Model(
             inputs=[input_cnn, input_numerical],
             outputs=[output_eval, output_mate, output_binary],
         )
 
+    @staticmethod
+    def plot_history(history: History, plot_path: str):
+        # plot the training loss and accuracy
+        n = np.arange(0, len(history['loss']))
+        plt.style.use('ggplot')
+        plt.figure()
+        plt.plot(n, history['loss'], label='train_loss')
+        plt.plot(n, history['accuracy'], label='train_acc')
+        if 'val_loss' in history:
+            plt.plot(n, history['val_loss'], label='val_loss')
+            plt.plot(n, history['val_accuracy'], label='val_acc')
+        plt.title('Training Loss and Accuracy')
+        plt.xlabel('Epoch #')
+        plt.ylabel('Loss/Accuracy')
+        plt.legend()
+        plt.savefig(plot_path)
+
     def get_summary(self) -> str:
         return self.model.summary()
 
-    def compile(
+    def initialize(
         self,
+        bitmap_shape: tuple,
+        additional_features_shape: tuple,
         optimizer: str = "SGD",
-        loss: str = "root_mean_squared_error",
-        metrics: list = [
-            "root_mean_squared_error"
-        ],  # list of metrics to evaluate model
+        loss: str = "mean_squared_error",
+        metrics=None,  # list of metrics to evaluate model
     ) -> None:
+        if metrics is None:
+            metrics = ["mse"]
+        self.model = self.__create_model(bitmap_shape, additional_features_shape)
         self.model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     def train(
@@ -74,7 +93,7 @@ class ChessEvaluationModel:
         train_target: list,  # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
         epochs: int = 100,
         batch_size: int = 128,
-    ) -> dict:
+    ) -> History:
         return self.model.fit(
             train_data,
             train_target,
