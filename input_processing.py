@@ -40,7 +40,7 @@ class ChessDataProcessor:
         "b": 8,
         "r": 9,
         "q": 10,
-        "k": 11
+        "k": 11,
     }
 
     def __init__(self, data_path: str, save_dir: str) -> None:
@@ -73,21 +73,21 @@ class ChessDataProcessor:
         fen_attrs = fen_attrs.split(" ")
 
         # whose turn it is
-        if fen_attrs[0] == 'b':
+        if fen_attrs[0] == "b":
             attrs[0] = 1
 
         # who can castle and how
-        if 'K' in fen_attrs[1]:
+        if "K" in fen_attrs[1]:
             attrs[1] = 1
-        if 'Q' in fen_attrs[1]:
+        if "Q" in fen_attrs[1]:
             attrs[2] = 1
-        if 'k' in fen_attrs[1]:
+        if "k" in fen_attrs[1]:
             attrs[3] = 1
-        if 'q' in fen_attrs[1]:
+        if "q" in fen_attrs[1]:
             attrs[4] = 1
 
         # square with legal en passant move
-        if not fen_attrs[2] == '-':
+        if not fen_attrs[2] == "-":
             attrs[5 + ord(fen_attrs[2][0]) - 97] = 1
 
         attrs[13] = int(fen_attrs[3])
@@ -97,7 +97,9 @@ class ChessDataProcessor:
 
     @staticmethod
     def __get_labels(pos_eval: str) -> np.ndarray:
-        return [0, int(pos_eval[1:]), 1] if pos_eval[0] == "#" else [int(pos_eval), 0, 0]
+        return (
+            [0, int(pos_eval[1:]), 1] if pos_eval[0] == "#" else [int(pos_eval), 0, 0]
+        )
 
     @staticmethod
     def __create_array(field: Fields, length: int) -> np.ndarray:
@@ -106,7 +108,10 @@ class ChessDataProcessor:
         elif field is Fields.ATTRIBUTE:
             return np.empty((length, 15), np.uint8)
         elif field is Fields.LABEL:
-            return np.empty((length, 3), [('eval', np.int16), ('mate_turns', np.uint8), ('is_mate', np.bool)])
+            return np.empty(
+                (length, 3),
+                [("eval", np.int16), ("mate_turns", np.uint8), ("is_mate", np.bool)],
+            )
 
         raise ValueError("field should be a singular Fields flag")
 
@@ -123,41 +128,52 @@ class ChessDataProcessor:
 
     def preprocess(self, fields: Fields) -> None:
         fields = [f for f in Fields if f in fields and f is not Fields.ALL]
-        print(f"Preprocessing the following fields: {', '.join(f'{f.name.lower()}s' for f in fields)}")
+        print(
+            f"Preprocessing the following fields: {', '.join(f'{f.name.lower()}s' for f in fields)}"
+        )
 
         print("Counting number of entries: ", end="")
-        with open(self.data_path, 'r') as file:
+        with open(self.data_path, "r") as file:
             data_length = sum(1 for _ in file)
         print(data_length)
 
         outputs = {f: self.__create_array(f, data_length) for f in fields}
 
-        with open(self.data_path, 'r') as file:
+        with open(self.data_path, "r") as file:
             chess_reader = csv.reader(file)
             next(chess_reader)
             counter = 0
             for row in chess_reader:
                 if not counter % 500000:
-                    print(f'\nRow {counter}', end='')
+                    print(f"\nRow {counter}", end="")
                 elif not counter % 50000:
-                    print('.', end='')
+                    print(".", end="")
                 for field in outputs:
                     outputs[field][counter] = self.__get_value(field, row)
                 counter += 1
 
-            print(f'\nTotal rows processed: {counter}\n')
+            print(f"\nTotal rows processed: {counter}\n")
 
         for field in outputs:
             print(f"Saving {field.name.lower()}s to {field.name.lower()}s.npy")
-            np.save(os.path.join(self.save_dir, f"{field.name.lower()}s"), outputs[field])
+            np.save(
+                os.path.join(self.save_dir, f"{field.name.lower()}s"), outputs[field]
+            )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")
-    parser.add_argument("data", help="Path to the chess dataset")
-    parser.add_argument("save", help="Path to save the preprocessed data")
-    parser.add_argument("-f", "--fields", nargs='+', help="Fields to preprocess",
-                        type=Fields.from_string, choices=list(Fields), default=[Fields.ALL])
+    parser.add_argument("--data", help="Path to the chess dataset")
+    parser.add_argument("--save", help="Path to save the preprocessed data")
+    parser.add_argument(
+        "-f",
+        "--fields",
+        nargs="+",
+        help="Fields to preprocess",
+        type=Fields.from_string,
+        choices=list(Fields),
+        default=[Fields.ALL],
+    )
     args = parser.parse_args()
 
     cdp = ChessDataProcessor(args.data, args.save)
