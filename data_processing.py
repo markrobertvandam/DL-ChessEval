@@ -66,3 +66,37 @@ class DataProcessing:
         except Exception as e:
             print(e)
             print("No scalers found in the given path.")
+
+    def train_val_test_split(
+        self, bitmaps, attributes, labels, train_split=0.8, val_split=0.1
+    ) -> tuple:
+        train_bitmaps, val_bitmaps, test_bitmaps = self.split_logic(
+            bitmaps, train_split, val_split
+        )
+        train_attributes, val_attributes, test_attributes = self.split_logic(
+            attributes, train_split, val_split
+        )
+        train_labels, val_labels, test_labels = self.split_logic(
+            labels, train_split, val_split
+        )
+
+        return (
+            train_bitmaps,
+            train_attributes,
+            train_labels,
+            val_bitmaps,
+            val_attributes,
+            val_labels,
+            test_bitmaps,
+            test_attributes,
+            test_labels,
+        )
+
+    def split_logic(self, data, train_split=0.8, val_split=0.1) -> tuple:
+        train_data = data[: int(len(data) * train_split)]
+        val_data = data[
+            int(len(data) * train_split) : int(len(data) * (train_split + val_split))
+        ]
+        test_data = data[int(len(data) * (train_split + val_split)) :]
+
+        return train_data, val_data, test_data

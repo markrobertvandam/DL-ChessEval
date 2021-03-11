@@ -4,6 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers, models, Input
 from tensorflow.python.keras.callbacks import History
 from data_processing import DataProcessing
+from sklearn.metrics import mean_squared_error, accuracy_score
 
 
 class ChessEvaluationModel:
@@ -119,7 +120,7 @@ class ChessEvaluationModel:
         else:
             self.data_processing_obj.load_scalers(path=path_to_scalers)
 
-    def train(
+    def train_redundant(
         self,
         train_data: list,  # list with 2 elements: [cnn_features, additional_features]
         train_target: list,  # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
@@ -140,8 +141,8 @@ class ChessEvaluationModel:
         train_target: list,  # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
         val_data: list,  # list with 2 elements: [cnn_features, additional_features]
         val_target: list,  # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-        epochs: int,
-        batch_size: int,
+        epochs: int = 100,
+        batch_size: int = 128,
     ) -> dict:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
@@ -179,3 +180,40 @@ class ChessEvaluationModel:
             validation_data=(val_data, val_target),
             batch_size=batch_size,
         )
+
+    def test(self, test_data, test_target, batch_size: int = 128):
+        # reshape data so we can transform
+        test_eval_reshaped = test_target[0].reshape(-1, 1)
+        test_mate_reshaped = test_target[1].reshape(-1, 1)
+
+        # transform test targets
+        test_eval_normalized = self.data_processing_obj.transform(
+            test_eval_reshaped, data_type="eval"
+        )
+        test_mate_normalized = self.data_processing_obj.transform(
+            test_mate_reshaped, data_type="mate"
+        )
+
+        test_target = [test_eval_normalized, test_mate_normalized, test_target[2]]
+
+        return self.model.evaluate(test_data, test_target, batch_size=batch_size)
+
+    def get_mse_inverse_transform(self, test_data, test_target):
+        predictions = self.predict(test_data)
+
+        eval_predictions_inversed = self.data_processing_obj.inverse_transform(
+            predictions[0], data_type="eval"
+        )
+        mate_predictions_inversed = self.data_processing_obj.inverse_transform(
+            predictions[1], data_type="mate"
+        )
+        is_mate_predictions = (predictions[2] > 0.5).astype(int)
+
+        mse_eval = mean_squared_error(eval_predictions_inversed, test_target[0])
+        mse_mate = mean_squared_error(mate_predictions_inversed, test_target[1])
+        accuracy_is_mate = accuracy_score(is_mate_predictions, test_target[2])
+
+        return mse_eval, mse_mate, accuracy_is_mate
+
+    def predict(self, data):
+        return self.model.predict(data)
