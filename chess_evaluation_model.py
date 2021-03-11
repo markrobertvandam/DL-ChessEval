@@ -3,11 +3,13 @@ import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers, models, Input
 from tensorflow.python.keras.callbacks import History
+from data_processing import DataProcessing
 
 
 class ChessEvaluationModel:
     def __init__(self):
         self.model = None
+        self.data_processing_obj = DataProcessing()
 
     @staticmethod
     def __create_model(bitmap_shape, additional_features_shape) -> models.Model:
@@ -103,12 +105,19 @@ class ChessEvaluationModel:
         },  # Dict with key the name of the output layer and value the loss function
         loss_weights: list = None,  # We can specify different weight for each loss
         metrics: list = None,  # list of metrics to evaluate model
+        path_to_scalers: str = None,  # path to scalers
     ) -> None:
 
         self.model = self.__create_model(bitmap_shape, additional_features_shape)
         self.model.compile(
             optimizer=optimizer, loss=loss, metrics=metrics, loss_weights=loss_weights
         )
+
+        # Initialize or load scalers
+        if path_to_scalers is None:
+            self.data_processing_obj.init_scalers()
+        else:
+            self.data_processing_obj.load_scalers(path=path_to_scalers)
 
     def train(
         self,
@@ -134,6 +143,35 @@ class ChessEvaluationModel:
         epochs: int,
         batch_size: int,
     ) -> dict:
+
+        train_eval_reshaped = train_target[0].reshape(-1, 1)
+        train_mate_reshaped = train_target[1].reshape(-1, 1)
+
+        val_eval_reshaped = val_target[0].reshape(-1, 1)
+        val_mate_reshaped = val_target[1].reshape(-1, 1)
+
+        # fit the training targets for eval and mate
+        self.data_processing_obj.fit_scalers(train_eval_reshaped, train_mate_reshaped)
+
+        # transform train targets
+        train_eval_normalized = self.data_processing_obj.transform(
+            train_eval_reshaped, data_type="eval"
+        )
+        train_mate_normalized = self.data_processing_obj.transform(
+            train_mate_reshaped, data_type="mate"
+        )
+
+        # transform val targets
+        val_eval_normalized = self.data_processing_obj.transform(
+            val_eval_reshaped, data_type="eval"
+        )
+        val_mate_normalized = self.data_processing_obj.transform(
+            val_mate_reshaped, data_type="mate"
+        )
+
+        train_target = [train_eval_normalized, train_mate_normalized, train_target[2]]
+        val_target = [val_eval_normalized, val_mate_normalized, val_target[2]]
+
         return self.model.fit(
             train_data,
             train_target,
