@@ -72,7 +72,7 @@ def main():
     chess_eval.plot_history(
         history,
         args.plot.format(
-            "eval_loss_0.1_bn_dropout_0.5_no_last_layer_normalized_target_test_scalers_class"
+            "eval_loss_0.1_bn_dropout_0.3_normalized_target_test_scalers_class"
         ),
     )
 
