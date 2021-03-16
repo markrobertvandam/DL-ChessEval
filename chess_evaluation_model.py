@@ -173,7 +173,11 @@ class ChessEvaluationModel:
         train_target = [train_eval_normalized, train_mate_normalized, train_target[2]]
         val_target = [val_eval_normalized, val_mate_normalized, val_target[2]]
 
-        es = EarlyStopping(monitor = 'val_loss', mode = 'min', patience = 10, min_delta = 0.015)
+        es = EarlyStopping(monitor = 'val_loss',
+                           mode = 'min',
+                           patience = 10,
+                           min_delta = 0.005, 
+                           restore_best_weights = True)
         return self.model.fit(
             train_data,
             train_target,
