@@ -23,7 +23,7 @@ class ChessEvaluationModel:
             20, kernel_size=(5, 5), strides=(1, 1), activation="elu"
         )(input_cnn)
         batch_norm_1 = layers.BatchNormalization()(conv_1)
-        dropout_1 = layers.Dropout(0.5)(batch_norm_1)
+        dropout_1 = layers.Dropout(0.3)(batch_norm_1)
 
         # Do we want max pooling? - FOR NOW, NO as we want to preserve the whole information
         # max_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(conv_1)
@@ -32,7 +32,7 @@ class ChessEvaluationModel:
             50, kernel_size=(3, 3), strides=(1, 1), activation="elu"
         )(dropout_1)
         batch_norm_2 = layers.BatchNormalization()(conv_2)
-        dropout_2 = layers.Dropout(0.5)(batch_norm_2)
+        dropout_2 = layers.Dropout(0.3)(batch_norm_2)
 
         # Do we want max pooling? - FOR NOW, NO as we want to preserve the whole information
         # max_2 = layers.MaxPooling2D(pool_size=(2, 2))(conv_2)
