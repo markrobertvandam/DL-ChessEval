@@ -8,18 +8,34 @@ from chess_evaluation_model import ChessEvaluationModel
 from data_processing import DataProcessing
 
 
+def gpu_fix() -> None:
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
+
+
 def main():
+    gpu_fix()
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")
-    parser.add_argument("--bitmaps", help="Path to the input bitmaps")
-    parser.add_argument("--attributes", help="Path to the additional input attributes")
-    parser.add_argument("--labels", help="Path to the input labels")
-    parser.add_argument("--plot", help="Path to the generated history plot image")
-    parser.add_argument("--scalers", help="Path to scalers")
+    parser.add_argument("-b", "--bitmaps", help="Path to the input bitmaps", required=True)
+    parser.add_argument("-a", "--attributes", help="Path to the additional input attributes", required=True)
+    parser.add_argument("-l", "--labels", help="Path to the input labels", required=True)
+    parser.add_argument("-p", "--plot", help="Path to the generated history plot image")
+    parser.add_argument("-s", "--scalers", help="Path to scalers")
+    parser.add_argument("-m", "--model", help="Path to created model")
     args = parser.parse_args()
 
     # load all data and path to scalers if given
     bitmaps = np.load(args.bitmaps)
-    n_samples = round(len(bitmaps) * 0.01)
+    n_samples = round(len(bitmaps) * 0.9)
     bitmaps = bitmaps[:n_samples]
     attributes = np.load(args.attributes)[:n_samples]
     labels = np.load(args.labels)[:n_samples]
@@ -57,7 +73,6 @@ def main():
         (8, 8, 12),
         (15,),
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
-        metrics=["mean_squared_error", "binary_accuracy"],
         path_to_scalers=path_to_scalers,
     )
 
@@ -66,9 +81,13 @@ def main():
         [train_target_eval, train_target_mate, train_target_is_mate],
         [val_bitmaps, val_attributes],
         [val_target_eval, val_target_mate, val_target_is_mate],
-        10,
-        256,
+        100,
+        512,
     )
+
+    if args.model is not None:
+        chess_eval.save_model(args.model)
+
     chess_eval.plot_history(
         history,
         args.plot.format(
@@ -81,9 +100,9 @@ def main():
         [test_target_eval, test_target_mate, test_target_is_mate],
     )
 
-    print("MSE on inverse test eval: {}".format(mse_eval))
-    print("MSE on inverse test mate: {}".format(mse_mate))
-    print("Accuracy on test is_mate: {}".format(accuracy_is_mate))
+    print("RMS on inverse test eval: {}".format(np.round(np.sqrt(mse_eval), 1)))
+    print("RMS on inverse test mate: {}".format(np.round(np.sqrt(mse_mate), 3)))
+    print("Accuracy on test is_mate: {}".format(np.round(accuracy_is_mate, 4)))
 
 
 if __name__ == "__main__":

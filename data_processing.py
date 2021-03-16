@@ -6,7 +6,7 @@ import os
 
 class DataProcessing:
     def __init__(
-        self, scaler_type_eval: str = "min_max", scaler_type_mate="min_max"
+            self, scaler_type_eval: str = "min_max", scaler_type_mate="min_max"
     ) -> None:
         self.scaler_type_eval = scaler_type_eval
         self.scaler_type_mate = scaler_type_mate
@@ -16,16 +16,16 @@ class DataProcessing:
 
     def init_scalers(self) -> None:
         if self.scaler_type_eval == "min_max":
-            self.scaler_eval = MinMaxScaler()
+            self.scaler_eval = MinMaxScaler((0, 100))
         elif self.scaler_type_eval == "standard":
             self.scaler_eval = StandardScaler()
         if self.scaler_type_mate == "min_max":
-            self.scaler_mate = MinMaxScaler()
+            self.scaler_mate = MinMaxScaler((0, 100))
         elif self.scaler_type_mate == "standard":
             self.scaler_mate = StandardScaler()
 
     def fit_scalers(
-        self, train_eval_target: np.ndarray, train_mate_target: np.ndarray
+            self, train_eval_target: np.ndarray, train_mate_target: np.ndarray
     ) -> None:
         self.scaler_eval.fit(train_eval_target)
         self.scaler_mate.fit(train_mate_target)
@@ -68,7 +68,7 @@ class DataProcessing:
             print("No scalers found in the given path.")
 
     def train_val_test_split(
-        self, bitmaps, attributes, labels, train_split=0.8, val_split=0.1
+            self, bitmaps, attributes, labels, train_split=0.8, val_split=0.1
     ) -> tuple:
         train_bitmaps, val_bitmaps, test_bitmaps = self.split_logic(
             bitmaps, train_split, val_split
@@ -94,9 +94,7 @@ class DataProcessing:
 
     def split_logic(self, data, train_split=0.8, val_split=0.1) -> tuple:
         train_data = data[: int(len(data) * train_split)]
-        val_data = data[
-            int(len(data) * train_split) : int(len(data) * (train_split + val_split))
-        ]
-        test_data = data[int(len(data) * (train_split + val_split)) :]
+        val_data = data[int(len(data) * train_split): int(len(data) * (train_split + val_split))]
+        test_data = data[int(len(data) * (train_split + val_split)):]
 
         return train_data, val_data, test_data
