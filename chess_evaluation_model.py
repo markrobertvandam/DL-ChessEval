@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers, models, Input
-from tensorflow.python.keras.callbacks import History
+from tensorflow.python.keras.callbacks import History, EarlyStopping
 from data_processing import DataProcessing
 from sklearn.metrics import mean_squared_error, accuracy_score
 
@@ -173,12 +173,14 @@ class ChessEvaluationModel:
         train_target = [train_eval_normalized, train_mate_normalized, train_target[2]]
         val_target = [val_eval_normalized, val_mate_normalized, val_target[2]]
 
+        es = EarlyStopping(monitor = 'val_loss', mode = 'min', patience = 10, min_delta = 0.015)
         return self.model.fit(
             train_data,
             train_target,
             epochs=epochs,
             validation_data=(val_data, val_target),
             batch_size=batch_size,
+            callbacks=[es],
         )
 
     def test(self, test_data, test_target, batch_size: int = 128):
