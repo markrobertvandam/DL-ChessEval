@@ -4,17 +4,18 @@ import numpy as np
 import tensorflow as tf
 
 from chess_evaluation_model import ChessEvaluationModel
+from model_parameter_pipeline import ModelParameterPipeline
 from data_processing import DataProcessing
 
 
 def gpu_fix() -> None:
-    gpus = tf.config.list_physical_devices('GPU')
+    gpus = tf.config.list_physical_devices("GPU")
     if gpus:
         try:
             # Currently, memory growth needs to be the same across GPUs
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-            logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+            logical_gpus = tf.config.experimental.list_logical_devices("GPU")
             print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
         except RuntimeError as e:
             # Memory growth must be set before GPUs have been initialized
@@ -24,9 +25,18 @@ def gpu_fix() -> None:
 def main():
     gpu_fix()
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")
-    parser.add_argument("-b", "--bitmaps", help="Path to the input bitmaps", required=True)
-    parser.add_argument("-a", "--attributes", help="Path to the additional input attributes", required=True)
-    parser.add_argument("-l", "--labels", help="Path to the input labels", required=True)
+    parser.add_argument(
+        "-b", "--bitmaps", help="Path to the input bitmaps", required=True
+    )
+    parser.add_argument(
+        "-a",
+        "--attributes",
+        help="Path to the additional input attributes",
+        required=True,
+    )
+    parser.add_argument(
+        "-l", "--labels", help="Path to the input labels", required=True
+    )
     parser.add_argument("-p", "--plot", help="Path to the generated history plot image")
     parser.add_argument("-s", "--scalers", help="Path to scalers")
     parser.add_argument("-m", "--model", help="Path to created model")
@@ -34,12 +44,13 @@ def main():
 
     # load all data and path to scalers if given
     bitmaps = np.load(args.bitmaps)
-    n_samples = round(len(bitmaps) * 0.1)
-    bitmaps = bitmaps[n_samples:2*n_samples]
-    attributes = np.load(args.attributes)[n_samples:2*n_samples]
-    labels = np.load(args.labels)[n_samples:2*n_samples]
+    n_samples = round(len(bitmaps) * 0.01)
+    bitmaps = bitmaps[n_samples : 2 * n_samples]
+    attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
+    labels = np.load(args.labels)[n_samples : 2 * n_samples]
     path_to_scalers = args.scalers
 
+    """
     # split on train, val, test sets
     data_processing_obj = DataProcessing()
     (
@@ -102,6 +113,16 @@ def main():
     print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval), 1))
     print("RMS on inverse test mate: {:7.3f}".format(np.sqrt(mse_mate), 3))
     print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
+    """
+
+    ## Test parameter pipeline
+    dict_of_params = {"activation_function": ["elu", "relu"],
+                      "epoch_number":[5,2]}
+
+    model_param_pipeline = ModelParameterPipeline(
+        bitmaps, attributes, labels, args.plot, dict_of_params
+    )
+    model_param_pipeline.run_pipeline()
 
 
 if __name__ == "__main__":

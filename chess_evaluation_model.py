@@ -15,24 +15,24 @@ class ChessEvaluationModel:
         self.data_processing_obj = DataProcessing()
 
     @staticmethod
-    def __create_model(bitmap_shape, additional_features_shape) -> models.Model:
+    def __create_model(bitmap_shape, additional_features_shape, activation_function='elu', dropout_rate=0.3) -> models.Model:
         # define the inputs
         input_cnn = Input(shape=bitmap_shape)
         input_numerical = Input(shape=additional_features_shape)
 
         # Marco Wiering paper architecture
         conv_1 = layers.Conv2D(
-            20, kernel_size=(5, 5), strides=(1, 1), activation="elu"
+            20, kernel_size=(5, 5), strides=(1, 1), activation=activation_function
         )(input_cnn)
-        dropout_1 = layers.Dropout(0.3)(conv_1)
+        dropout_1 = layers.Dropout(dropout_rate)(conv_1)
 
         # Do we want max pooling? - FOR NOW, NO as we want to preserve the whole information
         # max_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(conv_1)
 
         conv_2 = layers.Conv2D(
-            50, kernel_size=(3, 3), strides=(1, 1), activation="elu"
+            50, kernel_size=(3, 3), strides=(1, 1), activation=activation_function
         )(dropout_1)
-        dropout_2 = layers.Dropout(0.3)(conv_2)
+        dropout_2 = layers.Dropout(dropout_rate)(conv_2)
 
         # Do we want max pooling? - FOR NOW, NO as we want to preserve the whole information
         # max_2 = layers.MaxPooling2D(pool_size=(2, 2))(conv_2)
@@ -40,9 +40,9 @@ class ChessEvaluationModel:
         # Flatten data to allow concatenation with numerical feature vector
         flatten = layers.Flatten()(dropout_2)
         # Reduce the dimensionality before concatenating
-        dense_1 = layers.Dense(1000, activation="elu")(flatten)
+        dense_1 = layers.Dense(1000, activation=activation_function)(flatten)
         merged_layer = keras.layers.concatenate([dense_1, input_numerical])
-        dropout_3 = layers.Dropout(0.3)(merged_layer)
+        dropout_3 = layers.Dropout(dropout_rate)(merged_layer)
 
         # Output evaluation of position
         output_eval = layers.Dense(1, activation="linear", name="eval_score")(
@@ -91,6 +91,8 @@ class ChessEvaluationModel:
             bitmap_shape: tuple,
             additional_features_shape: tuple,
             optimizer="SGD",
+            activation_function = "elu",
+            dropout_rate = 0.5,
             loss=None,  # Dict with key the name of the output layer and value the loss function
             loss_weights: list = None,  # We can specify different weight for each loss
             metrics: list = None,  # list of metrics to evaluate model
@@ -115,7 +117,7 @@ class ChessEvaluationModel:
         #         "mate_turns": 1,
         #         "is_mate": 0.1,
         #     }
-        self.model = self.__create_model(bitmap_shape, additional_features_shape)
+        self.model = self.__create_model(bitmap_shape, additional_features_shape, activation_function, dropout_rate)
         self.model.compile(
             optimizer=optimizer, loss=loss, metrics=metrics, loss_weights=loss_weights
         )
