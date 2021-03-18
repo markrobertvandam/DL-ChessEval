@@ -31,8 +31,8 @@ class CustomEarlyStopping(Callback):
         self.best_mate_loss = np.Inf
 
     def on_epoch_end(self, epoch, logs=None) -> None:
-        eval_loss = logs.get('val_eval_score_loss')
-        mate_loss = logs.get('val_mate_turns_loss')
+        eval_loss = logs.get('val_eval_loss')
+        mate_loss = logs.get('val_mate_loss')
 
         should_stop = True
 

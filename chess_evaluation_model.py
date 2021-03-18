@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import keras
-from tensorflow.keras import layers, models, Input
-from tensorflow.python.keras.callbacks import History, EarlyStopping
+from tensorflow.keras import layers, models, initializers, Input
+from tensorflow.keras.callbacks import History
 
 from custom_early_stopping import CustomEarlyStopping
+from custom_loss import custom_loss
 from data_processing import DataProcessing
 from sklearn.metrics import mean_squared_error, accuracy_score
 
@@ -22,7 +23,7 @@ class ChessEvaluationModel:
 
         # Marco Wiering paper architecture
         conv_1 = layers.Conv2D(
-            20, kernel_size=(5, 5), strides=(1, 1), activation="elu"
+            20, kernel_size=(5, 5), strides=(1, 1), activation="relu", kernel_initializer=initializers.RandomUniform()
         )(input_cnn)
         dropout_1 = layers.Dropout(0.3)(conv_1)
 
@@ -30,7 +31,7 @@ class ChessEvaluationModel:
         # max_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(conv_1)
 
         conv_2 = layers.Conv2D(
-            50, kernel_size=(3, 3), strides=(1, 1), activation="elu"
+            50, kernel_size=(3, 3), strides=(1, 1), activation="relu", kernel_initializer=initializers.RandomUniform()
         )(dropout_1)
         dropout_2 = layers.Dropout(0.3)(conv_2)
 
@@ -39,27 +40,31 @@ class ChessEvaluationModel:
 
         # Flatten data to allow concatenation with numerical feature vector
         flatten = layers.Flatten()(dropout_2)
-        # Reduce the dimensionality before concatenating
-        dense_1 = layers.Dense(1000, activation="elu")(flatten)
-        merged_layer = keras.layers.concatenate([dense_1, input_numerical])
+
+        dense_cnn = layers.Dense(400, activation="relu", kernel_initializer=initializers.RandomUniform())(flatten)
+        dense_num = layers.Dense(30, activation="relu", kernel_initializer=initializers.RandomUniform())(
+            input_numerical)
+        merged_layer = keras.layers.concatenate([dense_cnn, dense_num])
         dropout_3 = layers.Dropout(0.3)(merged_layer)
 
+        dense = layers.Dense(215, activation="relu", kernel_initializer=initializers.RandomUniform())(dropout_3)
+
         # Output evaluation of position
-        output_eval = layers.Dense(1, activation="linear", name="eval_score")(
-            dropout_3
-        )
+        output_eval = layers.Dense(1, activation="linear", name="eval",
+                                   kernel_initializer=initializers.RandomUniform())(dense)
         # Output number of turns to forced mate
-        output_mate = layers.Dense(1, activation="linear", name="mate_turns")(
-            dropout_3
-        )
+        output_mate = layers.Dense(1, activation="linear", name="mate",
+                                   kernel_initializer=initializers.RandomUniform())(dense)
         # Output binary representing eval (0) or mate (1)
-        output_binary = layers.Dense(1, activation="sigmoid", name="is_mate")(
-            dropout_3
-        )
+        output_binary = layers.Dense(1, activation="sigmoid", name="is_mate",
+                                     kernel_initializer=initializers.RandomUniform())(dense)
+
+        # Concatenate all output layers into a single output, so loss can be computed correctly
+        output = keras.layers.concatenate([output_eval, output_mate, output_binary])
 
         return models.Model(
             inputs=[input_cnn, input_numerical],
-            outputs=[output_eval, output_mate, output_binary],
+            outputs=output,
         )
 
     @staticmethod
@@ -70,12 +75,12 @@ class ChessEvaluationModel:
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(n, history["eval_score_loss"][1:], label="train_eval_loss")
-        plt.plot(n, history["mate_turns_loss"][1:], label="train_mate_loss")
+        plt.plot(n, history["eval_loss"][1:], label="train_eval_loss")
+        plt.plot(n, history["mate_loss"][1:], label="train_mate_loss")
 
         if "val_loss" in history:
-            plt.plot(n, history["val_eval_score_loss"][1:], label="val_eval_loss")
-            plt.plot(n, history["val_mate_turns_loss"][1:], label="val_mate_loss")
+            plt.plot(n, history["val_eval_loss"][1:], label="val_eval_loss")
+            plt.plot(n, history["val_mate_loss"][1:], label="val_mate_loss")
 
         plt.title("Training Loss and Accuracy")
         plt.xlabel("Epoch #")
@@ -97,27 +102,25 @@ class ChessEvaluationModel:
             path_to_scalers: str = None,  # path to scalers
     ) -> None:
 
-        if loss is None:
-            loss = {
-                "eval_score": "mean_squared_error",
-                "mate_turns": "mean_squared_error",
-                "is_mate": "binary_crossentropy",
-            }
-        if metrics is None:
-            metrics = {
-                "eval_score": "mean_squared_error",
-                "mate_turns": "mean_squared_error",
-                "is_mate": "binary_accuracy",
-            }
+        # if loss is None:
+        #     loss = {
+        #         "eval": "mean_squared_error",
+        #         "mate": "mean_squared_error",
+        #         "is_mate": "binary_crossentropy",
+        #     }
+        # if metrics is None:
+        #     metrics = {
+        #         "is_mate": "binary_accuracy",
+        #     }
         # if loss_weights is None:
         #     loss_weights = {
-        #         "eval_score": 1,
-        #         "mate_turns": 1,
-        #         "is_mate": 0.1,
+        #         "eval": 1,
+        #         "mate": 10,
+        #         "is_mate": 1,
         #     }
         self.model = self.__create_model(bitmap_shape, additional_features_shape)
         self.model.compile(
-            optimizer=optimizer, loss=loss, metrics=metrics, loss_weights=loss_weights
+            optimizer=optimizer, loss=custom_loss, metrics=metrics, loss_weights=loss_weights
         )
 
         # Initialize or load scalers

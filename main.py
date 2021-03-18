@@ -69,6 +69,7 @@ def main():
     # init model and train
     chess_eval = ChessEvaluationModel()
     chess_eval.initialize(
+
         (8, 8, 12),
         (15,),
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
@@ -80,7 +81,7 @@ def main():
         [train_target_eval, train_target_mate, train_target_is_mate],
         [val_bitmaps, val_attributes],
         [val_target_eval, val_target_mate, val_target_is_mate],
-        100,
+        40,
         512,
     )
 
@@ -99,9 +100,9 @@ def main():
         [test_target_eval, test_target_mate, test_target_is_mate],
     )
 
-    print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval), 1))
-    print("RMS on inverse test mate: {:7.3f}".format(np.sqrt(mse_mate), 3))
-    print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
+    print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval)))
+    print("RMS on inverse test mate: {:7.4f}".format(np.sqrt(mse_mate)))
+    print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate))
 
 
 if __name__ == "__main__":

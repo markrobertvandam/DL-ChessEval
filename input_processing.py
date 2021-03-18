@@ -110,7 +110,7 @@ class ChessDataProcessor:
         elif field is Fields.LABEL:
             return np.empty(
                 (length, 3),
-                [("eval", np.int16), ("mate_turns", np.uint8), ("is_mate", np.bool)],
+                [("eval", np.int16), ("mate", np.uint8), ("is_mate", np.bool)],
             )
 
         raise ValueError("field should be a singular Fields flag")
