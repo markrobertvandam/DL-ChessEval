@@ -140,6 +140,7 @@ class ChessEvaluationModel:
             epochs=epochs,
             validation_split=0.1,
             batch_size=batch_size,
+            verbose=2,
         )
 
     def train_validate(
@@ -190,6 +191,7 @@ class ChessEvaluationModel:
             validation_data=(val_data, val_target),
             batch_size=batch_size,
             callbacks=[es],
+            verbose=1,
         )
 
     def test(self, test_data, test_target, batch_size: int = 128):

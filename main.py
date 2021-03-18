@@ -1,6 +1,5 @@
 import argparse
 
-from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import tensorflow as tf
 
@@ -35,10 +34,10 @@ def main():
 
     # load all data and path to scalers if given
     bitmaps = np.load(args.bitmaps)
-    n_samples = round(len(bitmaps) * 0.9)
-    bitmaps = bitmaps[:n_samples]
-    attributes = np.load(args.attributes)[:n_samples]
-    labels = np.load(args.labels)[:n_samples]
+    n_samples = round(len(bitmaps) * 0.1)
+    bitmaps = bitmaps[n_samples:2*n_samples]
+    attributes = np.load(args.attributes)[n_samples:2*n_samples]
+    labels = np.load(args.labels)[n_samples:2*n_samples]
     path_to_scalers = args.scalers
 
     # split on train, val, test sets
@@ -100,9 +99,9 @@ def main():
         [test_target_eval, test_target_mate, test_target_is_mate],
     )
 
-    print("RMS on inverse test eval: {}".format(np.round(np.sqrt(mse_eval), 1)))
-    print("RMS on inverse test mate: {}".format(np.round(np.sqrt(mse_mate), 3)))
-    print("Accuracy on test is_mate: {}".format(np.round(accuracy_is_mate, 4)))
+    print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval), 1))
+    print("RMS on inverse test mate: {:7.3f}".format(np.sqrt(mse_mate), 3))
+    print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
 
 
 if __name__ == "__main__":
