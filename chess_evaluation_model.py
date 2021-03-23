@@ -235,3 +235,6 @@ class ChessEvaluationModel:
 
     def save_model(self, model_path):
         self.model.save(model_path)
+
+    def load_model(self, model_path):
+        self.model.load(model_path)
