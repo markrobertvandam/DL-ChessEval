@@ -6,12 +6,15 @@ import os
 
 
 class ModelParameterPipeline:
-    def __init__(self, bitmaps, attributes, labels, plot_path, dict_of_parameters):
+    def __init__(self, bitmaps, attributes, labels, plot_path, save_path, dict_of_parameters):
         self.bitmaps = bitmaps
         self.attributes = attributes
         self.labels = labels
         self.plot_path = (
             plot_path  # only path without name, name is going to be generated
+        )
+        self.save_path = (
+            save_path # folder to save models in, allows multiple models to all save
         )
         self.dict_of_parameters = dict_of_parameters  # example element: "activation_function":['sigmoid', 'relu', 'elu']
 
@@ -64,7 +67,7 @@ class ModelParameterPipeline:
                                 if learning_rate is None:
                                     learning_rate = 0.01
                                 if activation_function is None:
-                                    activation_function = "elu"
+                                    activation_function = "relu"
                                 if optimizer is None:
                                     optimizer = tf.keras.optimizers.Adam()
                                 optimizer.learning_rate = learning_rate
@@ -114,8 +117,23 @@ class ModelParameterPipeline:
                                     )
                                 )
 
+                                model_name = (
+                                    "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}".format(
+                                        activation_function,
+                                        optimizer._name,
+                                        dropout_rate,
+                                        batch_size,
+                                        epoch_number,
+                                        learning_rate,
+                                    )
+                                )
+
                                 chess_eval.plot_history(
                                     history, os.path.join(self.plot_path, plot_name)
+                                )
+
+                                chess_eval.save_model(
+                                    os.path.join(self.save_path, model_name)
                                 )
 
                                 (

@@ -185,7 +185,7 @@ class ChessEvaluationModel:
         train_target = [train_eval_normalized, train_mate_normalized, train_target[2]]
         val_target = [val_eval_normalized, val_mate_normalized, val_target[2]]
 
-        es = CustomEarlyStopping(patience=10, d_eval=1e-2, d_mate=2e-4)
+        es = CustomEarlyStopping(patience=10, d_eval=0.2, d_mate=0.2)
         return self.model.fit(
             train_data,
             train_target,
