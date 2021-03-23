@@ -81,7 +81,7 @@ def main():
         [train_target_eval, train_target_mate, train_target_is_mate],
         [val_bitmaps, val_attributes],
         [val_target_eval, val_target_mate, val_target_is_mate],
-        40,
+        15,
         512,
     )
 

@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers, models, initializers, Input
 from tensorflow.keras.callbacks import History
+from tensorflow.python.keras.callbacks import EarlyStopping
 
 from custom_early_stopping import CustomEarlyStopping
-from custom_loss import custom_loss
+from custom_loss import CustomLossMetrics
 from data_processing import DataProcessing
 from sklearn.metrics import mean_squared_error, accuracy_score
 
@@ -14,6 +15,7 @@ class ChessEvaluationModel:
     def __init__(self):
         self.model = None
         self.data_processing_obj = DataProcessing()
+        self.custom_loss_metrics = None
 
     @staticmethod
     def __create_model(bitmap_shape, additional_features_shape) -> models.Model:
@@ -75,12 +77,12 @@ class ChessEvaluationModel:
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(n, history["eval_loss"][1:], label="train_eval_loss")
-        plt.plot(n, history["mate_loss"][1:], label="train_mate_loss")
+        plt.plot(n, history["eval_mse"][1:], label="train_eval_mse")
+        plt.plot(n, history["eval_mse"][1:], label="train_eval_mse")
 
         if "val_loss" in history:
-            plt.plot(n, history["val_eval_loss"][1:], label="val_eval_loss")
-            plt.plot(n, history["val_mate_loss"][1:], label="val_mate_loss")
+            plt.plot(n, history["val_eval_mse"][1:], label="val_eval_mse")
+            plt.plot(n, history["val_eval_mse"][1:], label="val_mate_mse")
 
         plt.title("Training Loss and Accuracy")
         plt.xlabel("Epoch #")
@@ -108,10 +110,13 @@ class ChessEvaluationModel:
         #         "mate": "mean_squared_error",
         #         "is_mate": "binary_crossentropy",
         #     }
-        # if metrics is None:
-        #     metrics = {
-        #         "is_mate": "binary_accuracy",
-        #     }
+        custom_loss_metrics = CustomLossMetrics()
+        if metrics is None:
+            metrics = [
+                custom_loss_metrics.eval_mse,
+                custom_loss_metrics.mate_mse,
+                custom_loss_metrics.is_mate_ba
+            ]
         # if loss_weights is None:
         #     loss_weights = {
         #         "eval": 1,
@@ -119,10 +124,10 @@ class ChessEvaluationModel:
         #         "is_mate": 1,
         #     }
         self.model = self.__create_model(bitmap_shape, additional_features_shape)
+        custom_loss_metrics = CustomLossMetrics()
         self.model.compile(
-            optimizer=optimizer, loss=custom_loss, metrics=metrics, loss_weights=loss_weights
+            optimizer=optimizer, loss=custom_loss_metrics.overall_loss, metrics=metrics, loss_weights=loss_weights
         )
-
         # Initialize or load scalers
         if path_to_scalers is None:
             self.data_processing_obj.init_scalers()
@@ -160,9 +165,11 @@ class ChessEvaluationModel:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
         train_mate_reshaped = train_target[1].reshape(-1, 1)
+        train_target = train_target[2].reshape(-1, 1)
 
         val_eval_reshaped = val_target[0].reshape(-1, 1)
         val_mate_reshaped = val_target[1].reshape(-1, 1)
+        val_target = val_target[2].reshape(-1, 1)
 
         # fit the training targets for eval and mate
         self.data_processing_obj.fit_scalers(train_eval_reshaped, train_mate_reshaped)
@@ -183,10 +190,10 @@ class ChessEvaluationModel:
             val_mate_reshaped, data_type="mate"
         )
 
-        train_target = [train_eval_normalized, train_mate_normalized, train_target[2]]
-        val_target = [val_eval_normalized, val_mate_normalized, val_target[2]]
+        train_target = np.concatenate([train_eval_normalized, train_mate_normalized, train_target], axis=1)
+        val_target = np.concatenate([val_eval_normalized, val_mate_normalized, val_target], axis=1)
 
-        es = CustomEarlyStopping(patience=10, d_eval=1e-2, d_mate=2e-4)
+        es = EarlyStopping(patience=10, min_delta=2e-1, restore_best_weights=True)
         return self.model.fit(
             train_data,
             train_target,
@@ -201,6 +208,7 @@ class ChessEvaluationModel:
         # reshape data so we can transform
         test_eval_reshaped = test_target[0].reshape(-1, 1)
         test_mate_reshaped = test_target[1].reshape(-1, 1)
+        test_target = test_target[2].reshape(-1, 1)
 
         # transform test targets
         test_eval_normalized = self.data_processing_obj.transform(
@@ -210,12 +218,12 @@ class ChessEvaluationModel:
             test_mate_reshaped, data_type="mate"
         )
 
-        test_target = [test_eval_normalized, test_mate_normalized, test_target[2]]
+        test_target = np.concatenate([test_eval_normalized, test_mate_normalized, test_target], axis=1)
 
         return self.model.evaluate(test_data, test_target, batch_size=batch_size)
 
     def get_mse_inverse_transform(self, test_data, test_target):
-        predictions = self.predict(test_data)
+        predictions = np.split(self.predict(test_data), 3, axis=1)
 
         eval_predictions_inversed = self.data_processing_obj.inverse_transform(
             predictions[0], data_type="eval"
