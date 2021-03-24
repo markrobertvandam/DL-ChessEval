@@ -34,7 +34,7 @@ class DataProcessing:
         if data_type == "eval":
             return self.scaler_eval.transform(target_data)
         elif data_type == "mate":
-            return self.scaler_mate.transform(target_data)
+            return target_data
 
     def inverse_transform(self, target_data, data_type: str = "eval") -> np.ndarray:
         if data_type == "eval":

@@ -56,7 +56,7 @@ def main():
     # labels = np.load(args.labels)
     # path_to_scalers = args.scalers
 
-    
+    """
     # split on train, val, test sets
     data_processing_obj = DataProcessing()
     (
@@ -128,7 +128,7 @@ def main():
         bitmaps, attributes, labels, args.plot, args.save, dict_of_params
     )
     model_param_pipeline.run_pipeline()
-    """
+
 
 if __name__ == "__main__":
     main()
