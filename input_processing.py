@@ -160,6 +160,18 @@ class ChessDataProcessor:
                 os.path.join(self.save_dir, f"{field.name.lower()}s"), outputs[field]
             )
 
+    def preprocess_fen(self, fen_string: str):
+        fields = [f for f in Fields if f is not Fields.ALL]
+
+        
+        
+        outputs = {f: self.__create_array(f, 1) for f in fields}
+        
+        for field in outputs:
+            outputs[field.name.lower()][0] = self.__get_value(field, [fen_string, '0'])
+
+        return outputs
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")

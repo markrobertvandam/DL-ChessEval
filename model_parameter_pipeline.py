@@ -6,7 +6,9 @@ import os
 
 
 class ModelParameterPipeline:
-    def __init__(self, bitmaps, attributes, labels, plot_path, save_path, dict_of_parameters):
+    def __init__(
+        self, bitmaps, attributes, labels, plot_path, save_path, dict_of_parameters
+    ):
         self.bitmaps = bitmaps
         self.attributes = attributes
         self.labels = labels
@@ -14,7 +16,7 @@ class ModelParameterPipeline:
             plot_path  # only path without name, name is going to be generated
         )
         self.save_path = (
-            save_path # folder to save models in, allows multiple models to all save
+            save_path  # folder to save models in, allows multiple models to all save
         )
         self.dict_of_parameters = dict_of_parameters  # example element: "activation_function":['sigmoid', 'relu', 'elu']
 
@@ -147,20 +149,4 @@ class ModelParameterPipeline:
                                         self.test_target_mate,
                                         self.test_target_is_mate,
                                     ],
-                                )
-
-                                print(
-                                    "RMS on inverse test eval: {:7.2f}".format(
-                                        np.sqrt(mse_eval), 1
-                                    )
-                                )
-                                print(
-                                    "RMS on inverse test mate: {:7.3f}".format(
-                                        np.sqrt(mse_mate), 3
-                                    )
-                                )
-                                print(
-                                    "Accuracy on test is_mate: {:7.4f}".format(
-                                        accuracy_is_mate, 4
-                                    )
                                 )

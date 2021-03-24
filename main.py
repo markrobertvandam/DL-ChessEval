@@ -39,17 +39,24 @@ def main():
     )
     parser.add_argument("-p", "--plot", help="Path to the generated history plot image")
     parser.add_argument("-sc", "--scalers", help="Path to scalers")
-    parser.add_argument("-sv", "--save", help = "Path to save model")
+    parser.add_argument("-sv", "--save", help="Path to save model")
     parser.add_argument("-m", "--model", help="Path to created model")
     args = parser.parse_args()
 
-    # load all data and path to scalers if given
     bitmaps = np.load(args.bitmaps)
-    attributes = np.load(args.attributes)
-    labels = np.load(args.labels)
+    n_samples = round(len(bitmaps) * 0.01)
+    bitmaps = bitmaps[n_samples : 2 * n_samples]
+    attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
+    labels = np.load(args.labels)[n_samples : 2 * n_samples]
     path_to_scalers = args.scalers
 
-    """
+    # load all data and path to scalers if given
+    # bitmaps = np.load(args.bitmaps)
+    # attributes = np.load(args.attributes)
+    # labels = np.load(args.labels)
+    # path_to_scalers = args.scalers
+
+    
     # split on train, val, test sets
     data_processing_obj = DataProcessing()
     (
@@ -112,8 +119,8 @@ def main():
     print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval), 1))
     print("RMS on inverse test mate: {:7.3f}".format(np.sqrt(mse_mate), 3))
     print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
+    
     """
-
     ## Test parameter pipeline
     dict_of_params = {}
 
@@ -121,6 +128,7 @@ def main():
         bitmaps, attributes, labels, args.plot, args.save, dict_of_params
     )
     model_param_pipeline.run_pipeline()
+    """
 
 if __name__ == "__main__":
     main()
