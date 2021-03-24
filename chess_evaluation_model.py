@@ -15,7 +15,12 @@ class ChessEvaluationModel:
         self.data_processing_obj = DataProcessing()
 
     @staticmethod
-    def __create_model(bitmap_shape, additional_features_shape, activation_function='elu', dropout_rate=0.3) -> models.Model:
+    def __create_model(
+        bitmap_shape,
+        additional_features_shape,
+        activation_function="elu",
+        dropout_rate=0.3,
+    ) -> models.Model:
         # define the inputs
         input_cnn = Input(shape=bitmap_shape)
         input_numerical = Input(shape=additional_features_shape)
@@ -45,17 +50,11 @@ class ChessEvaluationModel:
         dropout_3 = layers.Dropout(dropout_rate)(merged_layer)
 
         # Output evaluation of position
-        output_eval = layers.Dense(1, activation="linear", name="eval_score")(
-            dropout_3
-        )
+        output_eval = layers.Dense(1, activation="linear", name="eval_score")(dropout_3)
         # Output number of turns to forced mate
-        output_mate = layers.Dense(1, activation="linear", name="mate_turns")(
-            dropout_3
-        )
+        output_mate = layers.Dense(1, activation="linear", name="mate_turns")(dropout_3)
         # Output binary representing eval (0) or mate (1)
-        output_binary = layers.Dense(1, activation="sigmoid", name="is_mate")(
-            dropout_3
-        )
+        output_binary = layers.Dense(1, activation="sigmoid", name="is_mate")(dropout_3)
 
         return models.Model(
             inputs=[input_cnn, input_numerical],
@@ -87,16 +86,16 @@ class ChessEvaluationModel:
         return self.model.summary()
 
     def initialize(
-            self,
-            bitmap_shape: tuple,
-            additional_features_shape: tuple,
-            optimizer="SGD",
-            activation_function = "elu",
-            dropout_rate = 0.5,
-            loss=None,  # Dict with key the name of the output layer and value the loss function
-            loss_weights: list = None,  # We can specify different weight for each loss
-            metrics: list = None,  # list of metrics to evaluate model
-            path_to_scalers: str = None,  # path to scalers
+        self,
+        bitmap_shape: tuple,
+        additional_features_shape: tuple,
+        optimizer="SGD",
+        activation_function="elu",
+        dropout_rate=0.5,
+        loss=None,  # Dict with key the name of the output layer and value the loss function
+        loss_weights: list = None,  # We can specify different weight for each loss
+        metrics: list = None,  # list of metrics to evaluate model
+        path_to_scalers: str = None,  # path to scalers
     ) -> None:
 
         if loss is None:
@@ -117,7 +116,9 @@ class ChessEvaluationModel:
         #         "mate_turns": 1,
         #         "is_mate": 0.1,
         #     }
-        self.model = self.__create_model(bitmap_shape, additional_features_shape, activation_function, dropout_rate)
+        self.model = self.__create_model(
+            bitmap_shape, additional_features_shape, activation_function, dropout_rate
+        )
         self.model.compile(
             optimizer=optimizer, loss=loss, metrics=metrics, loss_weights=loss_weights
         )
@@ -129,12 +130,12 @@ class ChessEvaluationModel:
             self.data_processing_obj.load_scalers(path=path_to_scalers)
 
     def train_redundant(
-            self,
-            train_data: list,  # list with 2 elements: [cnn_features, additional_features]
-            train_target: list,
-            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-            epochs: int = 100,
-            batch_size: int = 128,
+        self,
+        train_data: list,  # list with 2 elements: [cnn_features, additional_features]
+        train_target: list,
+        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+        epochs: int = 100,
+        batch_size: int = 128,
     ) -> History:
         return self.model.fit(
             train_data,
@@ -146,15 +147,15 @@ class ChessEvaluationModel:
         )
 
     def train_validate(
-            self,
-            train_data: list,  # list with 2 elements: [cnn_features, additional_features]
-            train_target: list,
-            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-            val_data: list,  # list with 2 elements: [cnn_features, additional_features]
-            val_target: list,
-            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-            epochs: int = 100,
-            batch_size: int = 128,
+        self,
+        train_data: list,  # list with 2 elements: [cnn_features, additional_features]
+        train_target: list,
+        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+        val_data: list,  # list with 2 elements: [cnn_features, additional_features]
+        val_target: list,
+        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+        epochs: int = 100,
+        batch_size: int = 128,
     ) -> dict:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
@@ -237,4 +238,4 @@ class ChessEvaluationModel:
         self.model.save(model_path)
 
     def load_model(self, model_path):
-        self.model.load(model_path)
+        self.model = models.load_model(model_path)

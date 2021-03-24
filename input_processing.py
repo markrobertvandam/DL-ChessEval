@@ -160,17 +160,22 @@ class ChessDataProcessor:
                 os.path.join(self.save_dir, f"{field.name.lower()}s"), outputs[field]
             )
 
-    def preprocess_fen(self, fen_string: str):
+    def preprocess_fen_new(self, fen_string: str):
         fields = [f for f in Fields if f is not Fields.ALL]
 
-        
-        
         outputs = {f: self.__create_array(f, 1) for f in fields}
-        
+
         for field in outputs:
-            outputs[field.name.lower()][0] = self.__get_value(field, [fen_string, '0'])
+            outputs[field][0] = self.__get_value(field, [fen_string, "0"])
 
         return outputs
+
+    def preprocess_fen(self, fen_string: str):
+        fen_board, fen_attrs = fen_string.split(" ", 1)
+        return [
+            np.array([self.__get_bitmap(fen_board)]),
+            np.array([self.__get_attrs(fen_attrs)]),
+        ]
 
 
 def main() -> None:
