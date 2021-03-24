@@ -137,16 +137,3 @@ class ModelParameterPipeline:
                                 chess_eval.save_model(
                                     os.path.join(self.save_path, model_name)
                                 )
-
-                                (
-                                    mse_eval,
-                                    mse_mate,
-                                    accuracy_is_mate,
-                                ) = chess_eval.get_mse_inverse_transform(
-                                    [self.test_bitmaps, self.test_attributes],
-                                    [
-                                        self.test_target_eval,
-                                        self.test_target_mate,
-                                        self.test_target_is_mate,
-                                    ],
-                                )

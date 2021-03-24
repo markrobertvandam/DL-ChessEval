@@ -43,18 +43,18 @@ def main():
     parser.add_argument("-m", "--model", help="Path to created model")
     args = parser.parse_args()
 
-    bitmaps = np.load(args.bitmaps)
-    n_samples = round(len(bitmaps) * 0.01)
-    bitmaps = bitmaps[n_samples : 2 * n_samples]
-    attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
-    labels = np.load(args.labels)[n_samples : 2 * n_samples]
-    path_to_scalers = args.scalers
+    # bitmaps = np.load(args.bitmaps)
+    # n_samples = round(len(bitmaps) * 0.01)
+    # bitmaps = bitmaps[n_samples : 2 * n_samples]
+    # attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
+    # labels = np.load(args.labels)[n_samples : 2 * n_samples]
+    # path_to_scalers = args.scalers
 
     # load all data and path to scalers if given
-    # bitmaps = np.load(args.bitmaps)
-    # attributes = np.load(args.attributes)
-    # labels = np.load(args.labels)
-    # path_to_scalers = args.scalers
+    bitmaps = np.load(args.bitmaps)
+    attributes = np.load(args.attributes)
+    labels = np.load(args.labels)
+    path_to_scalers = args.scalers
 
     """
     # split on train, val, test sets
