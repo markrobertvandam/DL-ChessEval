@@ -26,8 +26,11 @@ class ChessEvaluationModel:
         input_numerical = Input(shape=additional_features_shape)
 
         conv_1 = layers.Conv2D(
-            20, kernel_size=(5, 5), strides=(1, 1), activation="relu",
-            kernel_initializer=initializers.RandomUniform()
+            20,
+            kernel_size=(5, 5),
+            strides=(1, 1),
+            activation="relu",
+            kernel_initializer=initializers.RandomUniform(),
         )(input_cnn)
         dropout_1 = layers.Dropout(0.3)(conv_1)
 
@@ -35,8 +38,11 @@ class ChessEvaluationModel:
         # max_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(conv_1)
 
         conv_2 = layers.Conv2D(
-            50, kernel_size=(3, 3), strides=(1, 1), activation="relu",
-            kernel_initializer=initializers.RandomUniform()
+            50,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            activation="relu",
+            kernel_initializer=initializers.RandomUniform(),
         )(dropout_1)
         dropout_2 = layers.Dropout(0.3)(conv_2)
 
@@ -46,23 +52,40 @@ class ChessEvaluationModel:
         # Flatten data to allow concatenation with numerical feature vector
         flatten = layers.Flatten()(dropout_2)
 
-        dense_cnn = layers.Dense(400, activation="relu", kernel_initializer=initializers.RandomUniform())(flatten)
-        dense_num = layers.Dense(30, activation="relu", kernel_initializer=initializers.RandomUniform())(
-            input_numerical)
+        dense_cnn = layers.Dense(
+            400, activation="relu", kernel_initializer=initializers.RandomUniform()
+        )(flatten)
+        dense_num = layers.Dense(
+            30, activation="relu", kernel_initializer=initializers.RandomUniform()
+        )(input_numerical)
         merged_layer = keras.layers.concatenate([dense_cnn, dense_num])
         dropout_3 = layers.Dropout(0.3)(merged_layer)
 
-        dense = layers.Dense(215, activation="relu", kernel_initializer=initializers.RandomUniform())(dropout_3)
+        dense = layers.Dense(
+            215, activation="relu", kernel_initializer=initializers.RandomUniform()
+        )(dropout_3)
 
         # Output evaluation of position
-        output_eval = layers.Dense(1, activation="linear", name="eval",
-                                   kernel_initializer=initializers.RandomUniform())(dense)
+        output_eval = layers.Dense(
+            1,
+            activation="linear",
+            name="eval_score",
+            kernel_initializer=initializers.RandomUniform(),
+        )(dense)
         # Output number of turns to forced mate
-        output_mate = layers.Dense(1, activation="linear", name="mate",
-                                   kernel_initializer=initializers.RandomUniform())(dense)
+        output_mate = layers.Dense(
+            1,
+            activation="linear",
+            name="mate_turns",
+            kernel_initializer=initializers.RandomUniform(),
+        )(dense)
         # Output binary representing eval (0) or mate (1)
-        output_binary = layers.Dense(1, activation="sigmoid", name="is_mate",
-                                     kernel_initializer=initializers.RandomUniform())(dense)
+        output_binary = layers.Dense(
+            1,
+            activation="sigmoid",
+            name="is_mate",
+            kernel_initializer=initializers.RandomUniform(),
+        )(dense)
 
         return models.Model(
             inputs=[input_cnn, input_numerical],
@@ -77,12 +100,32 @@ class ChessEvaluationModel:
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(n, history["eval_score_loss"][1:], label="Train eval loss", linestyle="dashed")
-        plt.plot(n, history["mate_turns_loss"][1:], label="Train mate loss", linestyle="dashed")
+        plt.plot(
+            n,
+            history["eval_score_loss"][1:],
+            label="Train eval loss",
+            linestyle="dashed",
+        )
+        plt.plot(
+            n,
+            history["mate_turns_loss"][1:],
+            label="Train mate loss",
+            linestyle="dashed",
+        )
 
         if "val_loss" in history:
-            plt.plot(n, history["val_eval_score_loss"][1:], label="Validation eval loss", linestyle="solid")
-            plt.plot(n, history["val_mate_turns_loss"][1:], label="Validation mate loss", linestyle="solid")
+            plt.plot(
+                n,
+                history["val_eval_score_loss"][1:],
+                label="Validation eval loss",
+                linestyle="solid",
+            )
+            plt.plot(
+                n,
+                history["val_mate_turns_loss"][1:],
+                label="Validation mate loss",
+                linestyle="solid",
+            )
 
         plt.title("Loss during training")
         plt.xlabel("Epoch #")
@@ -216,15 +259,12 @@ class ChessEvaluationModel:
         predictions = self.predict(test_data)
 
         eval_predictions_inversed = self.data_processing_obj.inverse_transform(
-            predictions[0], data_type="eval"
-        )
-        mate_predictions_inversed = self.data_processing_obj.inverse_transform(
-            predictions[1], data_type="mate"
+            predictions[0]
         )
         is_mate_predictions = (predictions[2] > 0.5).astype(int)
 
         mse_eval = mean_squared_error(eval_predictions_inversed, test_target[0])
-        mse_mate = mean_squared_error(mate_predictions_inversed, test_target[1])
+        mse_mate = mean_squared_error(predictions[1], test_target[1])
         accuracy_is_mate = accuracy_score(is_mate_predictions, test_target[2])
 
         return mse_eval, mse_mate, accuracy_is_mate
