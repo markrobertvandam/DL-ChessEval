@@ -122,7 +122,7 @@ def main():
     
     """
     # Test parameter pipeline
-    dict_of_params = {}
+    dict_of_params = {"epochs": [5]}
 
     model_param_pipeline = ModelParameterPipeline(
         bitmaps, attributes, labels, args.plot, args.save, dict_of_params
