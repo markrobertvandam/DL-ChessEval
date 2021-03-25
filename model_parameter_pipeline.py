@@ -18,7 +18,8 @@ class ModelParameterPipeline:
         self.save_path = (
             save_path  # folder to save models in, allows multiple models to all save
         )
-        self.dict_of_parameters = dict_of_parameters  # example element: "activation_function":['sigmoid', 'relu', 'elu']
+        self.dict_of_parameters = dict_of_parameters
+        # example element: "activation_function":['sigmoid', 'relu', 'elu']
 
     def prepare_data(self):
         # split on train, val, test sets
@@ -80,7 +81,7 @@ class ModelParameterPipeline:
                                 if epoch_number is None:
                                     epoch_number = 25
 
-                                ## Initialize model
+                                # Initialize model
                                 chess_eval = ChessEvaluationModel()
                                 chess_eval.initialize(
                                     (8, 8, 12),

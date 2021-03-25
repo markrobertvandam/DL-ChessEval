@@ -121,7 +121,7 @@ def main():
     print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
     
     """
-    ## Test parameter pipeline
+    # Test parameter pipeline
     dict_of_params = {}
 
     model_param_pipeline = ModelParameterPipeline(
