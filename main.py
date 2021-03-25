@@ -43,20 +43,19 @@ def main():
     parser.add_argument("-m", "--model", help="Path to created model")
     args = parser.parse_args()
 
-    # bitmaps = np.load(args.bitmaps)
-    # n_samples = round(len(bitmaps) * 0.01)
-    # bitmaps = bitmaps[n_samples : 2 * n_samples]
-    # attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
-    # labels = np.load(args.labels)[n_samples : 2 * n_samples]
-    # path_to_scalers = args.scalers
-
-    # load all data and path to scalers if given
     bitmaps = np.load(args.bitmaps)
-    attributes = np.load(args.attributes)
-    labels = np.load(args.labels)
+    n_samples = round(len(bitmaps) * 0.2)
+    bitmaps = bitmaps[n_samples : 2 * n_samples]
+    attributes = np.load(args.attributes)[n_samples : 2 * n_samples]
+    labels = np.load(args.labels)[n_samples : 2 * n_samples]
     path_to_scalers = args.scalers
 
-    """
+    # load all data and path to scalers if given
+    # bitmaps = np.load(args.bitmaps)
+    # attributes = np.load(args.attributes)
+    # labels = np.load(args.labels)
+    # path_to_scalers = args.scalers
+
     # split on train, val, test sets
     data_processing_obj = DataProcessing()
     (
@@ -97,7 +96,7 @@ def main():
         [train_target_eval, train_target_mate, train_target_is_mate],
         [val_bitmaps, val_attributes],
         [val_target_eval, val_target_mate, val_target_is_mate],
-        100,
+        25,
         512,
     )
 
@@ -106,9 +105,7 @@ def main():
 
     chess_eval.plot_history(
         history,
-        args.plot.format(
-            "eval_loss_0.1_bn_dropout_0.3_normalized_target_test_scalers_class"
-        ),
+        args.plot,
     )
 
     mse_eval, mse_mate, accuracy_is_mate = chess_eval.get_mse_inverse_transform(
@@ -119,7 +116,7 @@ def main():
     print("RMS on inverse test eval: {:7.2f}".format(np.sqrt(mse_eval), 1))
     print("RMS on inverse test mate: {:7.3f}".format(np.sqrt(mse_mate), 3))
     print("Accuracy on test is_mate: {:7.4f}".format(accuracy_is_mate, 4))
-    
+
     """
     # Test parameter pipeline
     dict_of_params = {"epochs": [5]}
@@ -128,6 +125,7 @@ def main():
         bitmaps, attributes, labels, args.plot, args.save, dict_of_params
     )
     model_param_pipeline.run_pipeline()
+    """
 
 
 if __name__ == "__main__":
