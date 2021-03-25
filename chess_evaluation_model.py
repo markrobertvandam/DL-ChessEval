@@ -71,22 +71,22 @@ class ChessEvaluationModel:
 
     @staticmethod
     def plot_history(history, plot_path: str):
+        # Plot the training loss
         history = history.history
-        # plot the training loss and accuracy
         n = np.arange(1, len(history["loss"]))
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(n, history["eval_score_loss"][1:], label="train_eval_loss")
-        plt.plot(n, history["mate_turns_loss"][1:], label="train_mate_loss")
+        plt.plot(n, history["eval_score_loss"][1:], label="Train eval loss", linestyle="dashed")
+        plt.plot(n, history["mate_turns_loss"][1:], label="Train mate loss", linestyle="dashed")
 
         if "val_loss" in history:
-            plt.plot(n, history["val_eval_score_loss"][1:], label="val_eval_loss")
-            plt.plot(n, history["val_mate_turns_loss"][1:], label="val_mate_loss")
+            plt.plot(n, history["val_eval_score_loss"][1:], label="Validation eval loss", linestyle="solid")
+            plt.plot(n, history["val_mate_turns_loss"][1:], label="Validation mate loss", linestyle="solid")
 
-        plt.title("Training Loss and Accuracy")
+        plt.title("Loss during training")
         plt.xlabel("Epoch #")
-        plt.ylabel("Loss/Accuracy")
+        plt.ylabel("Loss")
         plt.legend()
         plt.savefig(plot_path)
 
