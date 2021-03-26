@@ -72,9 +72,12 @@ class PlayChess:
                 print(mate_moves)
                 print(opponent_mates)
 
-    def predict_fen(self) -> str:
-        input1 = input("Paste fen-string: ")
-        board = chess.Board(" ".join(input1.split()[:4]))
+    def predict_fen(self, *args) -> str:
+        if len(args) == 0:
+            input1 = input("Paste fen-string: ")
+            board = chess.Board(" ".join(input1.split()[:4]))
+        else:
+            board = args[0]
 
         eval_moves, mate_moves, opponent_mates = self.predict_best_move(board)
         if len(mate_moves) > 0:
@@ -93,17 +96,22 @@ class PlayChess:
         potential_mate_moves = []
         potential_eval_moves = []
         potential_opponent_mates = []
-        for move in board.legal_moves:
-            print(f"Checking move...{move}")
+        eval_moves, opponent_mates, mate_moves = self.predict_best_move(board)
+
+        if len(eval_moves) > 0 or len(mate_moves) > 0:
+            best_moves = set(eval_moves[:6] + mate_moves)
+        else:
+            best_moves = opponent_mates
+        for move in best_moves:
             new_board = board.copy()
-            new_board.push(move)
+            new_board.push_san(move[0])
             eval_moves, opponent_mates, mate_moves = self.predict_best_move(new_board)
             if len(mate_moves) > 0:
-                potential_mate_moves.append((board.san(move), mate_moves[0][1]))
+                potential_mate_moves.append((move[0], mate_moves[0][1]))
             elif len(eval_moves) > 0:
-                potential_eval_moves.append((board.san(move), eval_moves[0][1]))
+                potential_eval_moves.append((move[0], eval_moves[0][1]))
             else:
-                potential_opponent_mates.append((board.san(move), opponent_mates[0][1]))
+                potential_opponent_mates.append((move[0], opponent_mates[0][1]))
         if turn:
             potential_mate_moves.sort(key = lambda x: x[1], reverse = True)
             potential_opponent_mates.sort(key = lambda x: x[1])
@@ -119,13 +127,27 @@ class PlayChess:
             return potential_eval_moves[0]
         return potential_mate_moves[0]
 
+    def play_game(self, colour: int):
+        board = chess.Board()
+        turn = 1
+        while not(board.is_checkmate()):
+            if colour == turn:
+                input1 = input("Please give your move: ")
+                board.push_san(input1)
+                colour *= -1
+            else:
+                model_move = self.predict_fen(board)
+                print(model_move)
+                board.push_san(model_move[0])
+                colour *= -1
+        print("end of game")
 
 def main():
     play_chess = PlayChess()
     commands = {'kaufmann': play_chess.kaufmann_test,
                 'predict': play_chess.predict_fen,
-                'predict_look_ahead': play_chess.predict_look_ahead}
-                # 'play_chess', play_game()}
+                'predict_look_ahead': play_chess.predict_look_ahead,
+                'play': play_chess.play_game}
 
     parser = argparse.ArgumentParser(description="Run Kaufmann test or play chess")
     parser.add_argument(
@@ -138,7 +160,7 @@ def main():
     args = parser.parse_args()
     func = commands[args.command]
     play_chess.chess_eval.load_model(args.model)
-    func()
+    func(-1)
 
 
 if __name__ == "__main__":
