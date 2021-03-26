@@ -80,6 +80,7 @@ class PlayChess:
             board = args[0]
 
         eval_moves, mate_moves, opponent_mates = self.predict_best_move(board)
+        print(eval_moves, mate_moves, opponent_mates)
         if len(mate_moves) > 0:
             return mate_moves[0]
         if len(eval_moves) > 0:
@@ -113,19 +114,20 @@ class PlayChess:
             else:
                 potential_opponent_mates.append((move[0], opponent_mates[0][1]))
         if turn:
-            potential_mate_moves.sort(key = lambda x: x[1], reverse = True)
-            potential_opponent_mates.sort(key = lambda x: x[1])
-            potential_eval_moves.sort(key = lambda x: x[1])
-        else:
             potential_mate_moves.sort(key = lambda x: x[1])
-            potential_opponent_mates.sort(key = lambda x: x[1], reverse = True)
+            potential_opponent_mates.sort(key = lambda x: x[1])
             potential_eval_moves.sort(key = lambda x: x[1], reverse = True)
+        else:
+            potential_mate_moves.sort(key = lambda x: x[1], reverse = True)
+            potential_opponent_mates.sort(key = lambda x: x[1], reverse = True)
+            potential_eval_moves.sort(key = lambda x: x[1])
 
+        print(potential_mate_moves, potential_eval_moves, potential_opponent_mates)
         if len(potential_mate_moves) > 0:
             return potential_mate_moves[0]
         if len(potential_eval_moves) > 0:
             return potential_eval_moves[0]
-        return potential_mate_moves[0]
+        return opponent_mates[0]
 
     def play_game(self, colour: int):
         board = chess.Board()
@@ -160,7 +162,7 @@ def main():
     args = parser.parse_args()
     func = commands[args.command]
     play_chess.chess_eval.load_model(args.model)
-    func(-1)
+    func()
 
 
 if __name__ == "__main__":
