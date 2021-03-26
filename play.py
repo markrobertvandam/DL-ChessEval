@@ -97,22 +97,35 @@ class PlayChess:
         potential_mate_moves = []
         potential_eval_moves = []
         potential_opponent_mates = []
-        eval_moves, opponent_mates, mate_moves = self.predict_best_move(board)
+        stale_mates = []
+        eval_moves, mate_moves, opponent_mates = self.predict_best_move(board)
 
         if len(eval_moves) > 0 or len(mate_moves) > 0:
             best_moves = set(eval_moves[:6] + mate_moves)
         else:
             best_moves = opponent_mates
         for move in best_moves:
+            opp_eval_moves, opp_mate_moves, opp_opponent_mates = [], [], []
             new_board = board.copy()
             new_board.push_san(move[0])
-            eval_moves, opponent_mates, mate_moves = self.predict_best_move(new_board)
-            if len(mate_moves) > 0:
-                potential_mate_moves.append((move[0], mate_moves[0][1]))
-            elif len(eval_moves) > 0:
-                potential_eval_moves.append((move[0], eval_moves[0][1]))
+
+            if new_board.is_checkmate():
+                if len(mate_moves) > 0:
+                    potential_mate_moves.append(move)
+                else:
+                    potential_eval_moves.append(move)
+            elif new_board.is_stalemate():
+                stale_mates.append(move)
             else:
-                potential_opponent_mates.append((move[0], opponent_mates[0][1]))
+                opp_eval_moves, opp_mate_moves, opp_opponent_mates = self.predict_best_move(new_board)
+
+                if len(opp_opponent_mates) > 0:
+                    potential_mate_moves.append((move[0], opp_opponent_mates[0][1]))
+                elif len(opp_eval_moves) > 0:
+                    potential_eval_moves.append((move[0], opp_eval_moves[0][1]))
+                else:
+                    potential_opponent_mates.append((move[0], opp_mate_moves[0][1]))
+
         if turn:
             potential_mate_moves.sort(key = lambda x: x[1])
             potential_opponent_mates.sort(key = lambda x: x[1])
@@ -122,11 +135,13 @@ class PlayChess:
             potential_opponent_mates.sort(key = lambda x: x[1], reverse = True)
             potential_eval_moves.sort(key = lambda x: x[1])
 
-        print(potential_mate_moves, potential_eval_moves, potential_opponent_mates)
+        print(potential_mate_moves, potential_eval_moves, potential_opponent_mates, stale_mates)
         if len(potential_mate_moves) > 0:
             return potential_mate_moves[0]
         if len(potential_eval_moves) > 0:
             return potential_eval_moves[0]
+        if len(stale_mates) > 0:
+            return stale_mates[0]
         return opponent_mates[0]
 
     def play_game(self, colour: int):
