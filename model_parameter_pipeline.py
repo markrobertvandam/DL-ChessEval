@@ -89,7 +89,7 @@ class ModelParameterPipeline:
                                     optimizer=optimizer,
                                     activation_function=activation_function,
                                     dropout_rate=dropout_rate,
-                                    path_to_scalers=None,
+                                    path_to_scalers=None
                                 )
 
                                 history = chess_eval.train_validate(

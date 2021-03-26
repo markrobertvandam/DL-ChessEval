@@ -11,7 +11,7 @@ class DataProcessing:
 
     def init_scalers(self) -> None:
         if self.scaler_type_eval == "min_max":
-            self.scaler_eval = MinMaxScaler((0, 100))
+            self.scaler_eval = MinMaxScaler()
         elif self.scaler_type_eval == "standard":
             self.scaler_eval = StandardScaler()
 

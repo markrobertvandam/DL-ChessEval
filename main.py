@@ -57,6 +57,7 @@ def main():
     # path_to_scalers = args.scalers
 
     # split on train, val, test sets
+    """
     data_processing_obj = DataProcessing()
     (
         train_bitmaps,
@@ -119,13 +120,12 @@ def main():
 
     """
     # Test parameter pipeline
-    dict_of_params = {"epochs": [5]}
+    dict_of_params = {"batch_size": [64]}
 
     model_param_pipeline = ModelParameterPipeline(
         bitmaps, attributes, labels, args.plot, args.save, dict_of_params
     )
     model_param_pipeline.run_pipeline()
-    """
 
 
 if __name__ == "__main__":

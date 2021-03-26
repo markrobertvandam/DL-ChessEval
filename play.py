@@ -153,7 +153,7 @@ class PlayChess:
                 board.push_san(input1)
                 colour *= -1
             else:
-                model_move = self.predict_fen(board)
+                model_move = self.predict_look_ahead(board)
                 print(model_move)
                 board.push_san(model_move[0])
                 colour *= -1
@@ -177,7 +177,7 @@ def main():
     args = parser.parse_args()
     func = commands[args.command]
     play_chess.chess_eval.load_model(args.model)
-    func()
+    func(-1)
 
 
 if __name__ == "__main__":
