@@ -1,3 +1,7 @@
+rnb1kb1r/pppp1p1p/3np3/3B2pQ/5q2/P6N/RPPP2PP/1NBK1R2 b kq - 5 9
+rnbqkbnr/p1pppp2/1p5p/6p1/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 4
+rnbqkbnr/ppppp2p/5p2/6p1/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3
+1rb4r/p1Pp3p/kb1P3n/3Q4/N3Pp2/8/P1P3PP/7K w - - 2 2
 4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k -
 1rb4r/pkPp3p/1b1P3n/1Q6/N3Pp2/8/P1P3PP/7K w - -
 1rbq1rk1/p1b1nppp/1p2p3/8/1B1pN3/P2B4/1P3PPP/2RQ1R1K w - - bm Nf6+; id "position 01";
