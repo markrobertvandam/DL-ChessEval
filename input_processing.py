@@ -131,48 +131,66 @@ class ChessDataProcessor:
         )
 
         print("Counting number of entries: ", end="")
+        num_eval = 0
+        num_mate = 0
         with open(self.data_path, "r") as file:
-            data_length = sum(1 for _ in file)
-        print(data_length)
+            # Skip header before counting lines
+            next(file)
+            for line in file:
+                if "#" in line:
+                    num_mate += 1
+                else:
+                    num_eval += 1
+        print(f"eval: {num_eval}, mate: {num_mate}")
 
-        outputs = {f: self.__create_array(f, data_length) for f in fields}
+        eval_outputs = {f: self.__create_array(f, num_eval) for f in fields}
+        mate_outputs = {f: self.__create_array(f, num_mate) for f in fields}
 
         with open(self.data_path, "r") as file:
             chess_reader = csv.reader(file)
             next(chess_reader)
-            counter = 0
+            mate_counter = 0
+            eval_counter = 0
             for row in chess_reader:
-                if not counter % 500000:
-                    print(f"\nRow {counter}", end="")
-                elif not counter % 50000:
-                    print(".", end="")
-                for field in outputs:
-                    outputs[field][counter] = self.__get_value(field, row)
-                counter += 1
+                if not (mate_counter + eval_counter) % 500000:
+                    print(f"\nRow {mate_counter + eval_counter}", end="", flush=True)
+                elif not (mate_counter + eval_counter) % 50000:
+                    print(".", end="", flush=True)
+                # Select correct output dict
+                if "#" in row[1]:
+                    for field in fields:
+                        mate_outputs[field][mate_counter] = self.__get_value(field, row)
+                    mate_counter += 1
+                else:
+                    for field in fields:
+                        eval_outputs[field][eval_counter] = self.__get_value(field, row)
+                    eval_counter += 1
 
-            print(f"\nTotal rows processed: {counter}\n")
+            print(f"\nTotal rows processed: {mate_counter + eval_counter}\n")
 
-        for field in outputs:
-            print(f"Saving {field.name.lower()}s to {field.name.lower()}s.npy")
-            np.save(
-                os.path.join(self.save_dir, f"{field.name.lower()}s"), outputs[field]
-            )
+        for field in fields:
+            print(f"Saving eval {field.name.lower()}s to eval_{field.name.lower()}s.npy")
+            np.save(os.path.join(self.save_dir, f"eval_{field.name.lower()}s"), eval_outputs[field])
+            print(f"Saving mate {field.name.lower()}s to mate_{field.name.lower()}s.npy")
+            np.save(os.path.join(self.save_dir, f"mate_{field.name.lower()}s"), mate_outputs[field])
 
-    def preprocess_fen_new(self, fen_string: str):
+    @staticmethod
+    def preprocess_fen_new(fen_string: str):
         fields = [f for f in Fields if f is not Fields.ALL]
 
-        outputs = {f: self.__create_array(f, 1) for f in fields}
+        outputs = {f: ChessDataProcessor.__create_array(f, 1) for f in fields}
 
         for field in outputs:
-            outputs[field][0] = self.__get_value(field, [fen_string, "0"])
+            outputs[field][0] = ChessDataProcessor.__get_value(field, [fen_string, "0"])
 
         return outputs
 
-    def preprocess_fen(self, fen_string: str):
+    @staticmethod
+    def preprocess_fen(fen_string: str):
         fen_board, fen_attrs = fen_string.split(" ", 1)
         return [
-            np.array([self.__get_bitmap(fen_board)]),
-            np.array([self.__get_attrs(fen_attrs)]),
+            np.array([ChessDataProcessor.__get_bitmap(fen_board)]),
+            np.array([ChessDataProcessor.__get_attrs(fen_attrs)]),
         ]
 
 
