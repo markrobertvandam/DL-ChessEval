@@ -16,10 +16,10 @@ class ChessEvaluationModel:
 
     @staticmethod
     def __create_model(
-        bitmap_shape,
-        additional_features_shape,
-        activation_function="relu",
-        dropout_rate=0.3,
+            bitmap_shape,
+            additional_features_shape,
+            activation_function,
+            dropout_rate,
     ) -> models.Model:
         # define the inputs
         input_cnn = Input(shape=bitmap_shape)
@@ -29,7 +29,7 @@ class ChessEvaluationModel:
             20,
             kernel_size=(5, 5),
             strides=(1, 1),
-            activation= activation_function,
+            activation=activation_function,
             kernel_initializer=initializers.RandomUniform(),
         )(input_cnn)
         dropout_1 = layers.Dropout(dropout_rate)(conv_1)
@@ -41,7 +41,7 @@ class ChessEvaluationModel:
             50,
             kernel_size=(3, 3),
             strides=(1, 1),
-            activation= activation_function,
+            activation=activation_function,
             kernel_initializer=initializers.RandomUniform(),
         )(dropout_1)
         dropout_2 = layers.Dropout(dropout_rate)(conv_2)
@@ -53,22 +53,22 @@ class ChessEvaluationModel:
         flatten = layers.Flatten()(dropout_2)
 
         dense_cnn = layers.Dense(
-            400, activation= activation_function, kernel_initializer=initializers.RandomUniform()
+            400, activation=activation_function, kernel_initializer=initializers.RandomUniform()
         )(flatten)
         dense_num = layers.Dense(
-            30, activation= activation_function, kernel_initializer=initializers.RandomUniform()
+            30, activation=activation_function, kernel_initializer=initializers.RandomUniform()
         )(input_numerical)
         merged_layer = keras.layers.concatenate([dense_cnn, dense_num])
         dropout_3 = layers.Dropout(dropout_rate)(merged_layer)
 
         dense = layers.Dense(
-            215, activation= activation_function, kernel_initializer=initializers.RandomUniform()
+            215, activation=activation_function, kernel_initializer=initializers.RandomUniform()
         )(dropout_3)
 
         # Output evaluation of position
         output_eval = layers.Dense(
             1,
-            activation="sigmoid",
+            activation="linear",
             name="eval_score",
             kernel_initializer=initializers.RandomUniform(),
         )(dense)
@@ -137,16 +137,16 @@ class ChessEvaluationModel:
         return self.model.summary()
 
     def initialize(
-        self,
-        bitmap_shape: tuple,
-        additional_features_shape: tuple,
-        optimizer="Adam",
-        activation_function="relu",
-        dropout_rate=0.3,
-        loss=None,  # Dict with key the name of the output layer and value the loss function
-        loss_weights: list = None,  # We can specify different weight for each loss
-        metrics: list = None,  # list of metrics to evaluate model
-        path_to_scalers: str = None,  # path to scalers
+            self,
+            bitmap_shape: tuple,
+            additional_features_shape: tuple,
+            optimizer,
+            activation_function,
+            dropout_rate,
+            loss=None,  # Dict with key the name of the output layer and value the loss function
+            loss_weights: list = None,  # We can specify different weight for each loss
+            metrics: list = None,  # list of metrics to evaluate model
+            path_to_scalers: str = None,  # path to scalers
     ) -> None:
 
         if loss is None:
@@ -181,15 +181,15 @@ class ChessEvaluationModel:
             self.data_processing_obj.load_scalers(path=path_to_scalers)
 
     def train_validate(
-        self,
-        train_data: list,  # list with 2 elements: [cnn_features, additional_features]
-        train_target: list,
-        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-        val_data: list,  # list with 2 elements: [cnn_features, additional_features]
-        val_target: list,
-        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-        epochs: int = 25,
-        batch_size: int = 512,
+            self,
+            train_data: list,  # list with 2 elements: [cnn_features, additional_features]
+            train_target: list,
+            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+            val_data: list,  # list with 2 elements: [cnn_features, additional_features]
+            val_target: list,
+            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+            epochs: int = 25,
+            batch_size: int = 512,
     ) -> dict:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
@@ -222,6 +222,7 @@ class ChessEvaluationModel:
         )
 
     def test(self, test_data, test_target, batch_size: int = 128):
+        # TODO: Fix this to work with the new normalization (or rather, lack thereof for mate data)
         # reshape data so we can transform
         test_eval_reshaped = test_target[0].reshape(-1, 1)
         test_mate_reshaped = test_target[1].reshape(-1, 1)

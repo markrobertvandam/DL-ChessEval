@@ -69,6 +69,17 @@ class DataProcessing:
             test_labels,
         )
 
+    def train_test_split(self, bitmaps, attributes, labels, train_split=0.9) -> tuple:
+        output = self.train_val_test_split(bitmaps, attributes, labels, train_split=train_split, val_split=0)
+        return (
+            output[0],
+            output[1],
+            output[2],
+            output[6],
+            output[7],
+            output[8]
+        )
+
     def split_logic(self, data, train_split=0.8, val_split=0.1) -> tuple:
         train_data = data[: int(len(data) * train_split)]
         val_data = data[int(len(data) * train_split): int(len(data) * (train_split + val_split))]

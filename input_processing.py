@@ -5,7 +5,7 @@ import csv
 import os
 from enum import Flag, auto
 from functools import reduce
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -96,10 +96,8 @@ class ChessDataProcessor:
         return attrs
 
     @staticmethod
-    def __get_labels(pos_eval: str) -> np.ndarray:
-        return (
-            [0, int(pos_eval[1:]), 1] if pos_eval[0] == "#" else [int(pos_eval), 0, 0]
-        )
+    def __get_labels(pos_eval: str) -> Tuple[int, int, int]:
+        return (0, int(pos_eval[1:]), 1) if pos_eval[0] == "#" else (int(pos_eval), 0, 0)
 
     @staticmethod
     def __create_array(field: Fields, length: int) -> np.ndarray:
@@ -109,7 +107,7 @@ class ChessDataProcessor:
             return np.empty((length, 15), np.uint8)
         elif field is Fields.LABEL:
             return np.empty(
-                (length, 3),
+                (length,),
                 [("eval", np.int16), ("mate_turns", np.uint8), ("is_mate", np.bool)],
             )
 

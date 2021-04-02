@@ -28,27 +28,12 @@ class ModelParameterPipeline:
             self.train_bitmaps,
             self.train_attributes,
             self.train_labels,
-            self.val_bitmaps,
-            self.val_attributes,
-            self.val_labels,
             self.test_bitmaps,
             self.test_attributes,
             self.test_labels,
-        ) = data_processing_obj.train_val_test_split(
+        ) = data_processing_obj.train_test_split(
             self.bitmaps, self.attributes, self.labels
         )
-
-        self.train_target_eval = self.train_labels["eval"][:, 0]
-        self.train_target_mate = self.train_labels["eval"][:, 1]
-        self.train_target_is_mate = self.train_labels["eval"][:, 2]
-
-        self.val_target_eval = self.val_labels["eval"][:, 0]
-        self.val_target_mate = self.val_labels["eval"][:, 1]
-        self.val_target_is_mate = self.val_labels["eval"][:, 2]
-
-        self.test_target_eval = self.test_labels["eval"][:, 0]
-        self.test_target_mate = self.test_labels["eval"][:, 1]
-        self.test_target_is_mate = self.test_labels["eval"][:, 2]
 
     def run_pipeline(self):
 
@@ -86,24 +71,24 @@ class ModelParameterPipeline:
                                 chess_eval.initialize(
                                     (8, 8, 12),
                                     (15,),
-                                    optimizer=optimizer,
-                                    activation_function=activation_function,
-                                    dropout_rate=dropout_rate,
+                                    optimizer,
+                                    activation_function,
+                                    dropout_rate,
                                     path_to_scalers=None
                                 )
 
                                 history = chess_eval.train_validate(
                                     [self.train_bitmaps, self.train_attributes],
                                     [
-                                        self.train_target_eval,
-                                        self.train_target_mate,
-                                        self.train_target_is_mate,
+                                        self.train_labels["eval"],
+                                        self.train_labels["mate_turns"],
+                                        self.train_labels["is_mate"],
                                     ],
-                                    [self.val_bitmaps, self.val_attributes],
+                                    [self.test_bitmaps, self.test_attributes],
                                     [
-                                        self.val_target_eval,
-                                        self.val_target_mate,
-                                        self.val_target_is_mate,
+                                        self.test_labels["eval"],
+                                        self.test_labels["mate_turns"],
+                                        self.test_labels["is_mate"]
                                     ],
                                     epoch_number,
                                     batch_size,
