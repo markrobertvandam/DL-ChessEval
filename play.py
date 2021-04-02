@@ -11,11 +11,18 @@ class PlayChess:
         self.input_processing_obj = ChessDataProcessor("","")
         self.chess_eval = ChessEvaluationModel()
 
-    def analyze(self, curr_board):
+    def analyze(self, *args):
+        if len(args) == 0:
+            input1 = input("Paste fen-string: ")
+            curr_board = chess.Board(" ".join(input1.split()[:4]))
+        else:
+            curr_board = args[0]
+
         fen_string = curr_board.fen()
         bitmap, attr = self.input_processing_obj.preprocess_fen(fen_string)
         prediction = self.chess_eval.predict([bitmap, attr])
-
+        if len(args) == 0:
+            print(prediction)
         return prediction
 
     def predict_best_move(self, curr_board) -> list:
@@ -164,7 +171,8 @@ def main():
     commands = {'kaufmann': play_chess.kaufmann_test,
                 'predict': play_chess.predict_fen,
                 'predict_look_ahead': play_chess.predict_look_ahead,
-                'play': play_chess.play_game}
+                'play': play_chess.play_game,
+                'analyze': play_chess.analyze}
 
     parser = argparse.ArgumentParser(description="Run Kaufmann test or play chess")
     parser.add_argument(
@@ -177,7 +185,7 @@ def main():
     args = parser.parse_args()
     func = commands[args.command]
     play_chess.chess_eval.load_model(args.model)
-    func(-1)
+    func()
 
 
 if __name__ == "__main__":
