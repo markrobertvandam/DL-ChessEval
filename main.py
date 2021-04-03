@@ -27,7 +27,8 @@ def parse_args() -> argparse.Namespace:
 
     sp = parser.add_subparsers(title="Command", dest="command")
     shared = argparse.ArgumentParser(description="Shared parameters", add_help=False)
-    shared.add_argument("bitmaps", help="Path to the input bitmaps")
+    shared.add_argument(help="Directory where input files are saved")
+    shared.add_argument("-d", "--data", "bitmaps", help="Path to the input bitmaps")
     shared.add_argument("attributes", help="Path to the additional input attributes")
     shared.add_argument("labels", help="Path to the input labels")
 
@@ -52,21 +53,43 @@ def parse_args() -> argparse.Namespace:
 
 
 def slice_data(
-        bitmaps_path, attributes_path, labels_path, percentage, offset
+        e_bitmaps_path, e_attributes_path, e_labels_path, m_bitmaps_path,
+        m_attributes_path, m_labels_path, percentage, offset
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    bitmaps = np.load(bitmaps_path)
-    n_samples = round(len(bitmaps) * percentage / 100)
-    offset = round(len(bitmaps) * offset / 100)
+    bitmap_evals = np.load(e_bitmaps_path)
+    n_samples = round(len(bitmap_evals) * percentage / 100)
+    offset = round(len(bitmap_evals) * offset / 100)
+
+    bitmap_mates = np.load(m_bitmaps_path)
+    n_mates = round(len(bitmap_mates) * percentage / 100)
+    offset_mates = round(len(bitmap_mates) * offset / 100)
+    
+    bitmaps = np.concatenate(bitmap_evals[offset:offset + n_samples], bitmap_mates[offset_mates:offset_mates + n_mates])
+
     return (
-        bitmaps[offset:offset + n_samples],
-        np.load(attributes_path)[offset:offset + n_samples],
-        np.load(labels_path)[offset:offset + n_samples]
+        bitmaps,
+        np.concatenate(
+            np.load(e_attributes_path)[offset:offset + n_samples],
+            np.load(m_attributes_path)[offset_mates:offset_mates + n_mates]
+        ),
+        np.concatenate(
+            np.load(e_labels_path)[offset:offset + n_samples],
+            np.load(m_labels_path)[offset_mates:offset_mates + n_mates]
+        )
     )
 
 
 def tune(args: argparse.Namespace) -> None:
     from model_parameter_pipeline import ModelParameterPipeline
-    bitmaps, attributes, labels = slice_data(args.bitmaps, args.attributes, args.labels, args.percentage, args.offset)
+    e_bitmaps_path = args.eb if args.eb else args.data + "eval_bitmaps.npy"
+    e_attributes_path = args.ea if args.ea else args.data + "eval_attributes.npy"
+    e_labels_path = args.el if args.el else args.data + "eval_labels.npy"
+    m_bitmaps_path = args.mb if args.mb else args.data + "mate_bitmaps.npy"
+    m_attributes_path = args.ma if args.ma else args.data + "mate_attributes.npy"
+    m_labels_path = args.ml if args.ml else args.data + "mate_labels.npy"
+    bitmaps, attributes, labels = slice_data(e_bitmaps_path, e_attributes_path, e_labels_path,
+                                             m_bitmaps_path, m_attributes_path, m_labels_path,
+                                             args.percentage, args.offset)
 
     # Test parameter pipeline
     dict_of_params = {
@@ -131,6 +154,8 @@ def full_run(args: argparse.Namespace):
 def main():
     args = parse_args()
     gpu_fix()
+    print(args)
+    exit()
 
     if args.command == "pipeline":
         tune(args)
