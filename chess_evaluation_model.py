@@ -1,8 +1,10 @@
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers, models, initializers, Input
-from tensorflow.python.keras.callbacks import History, EarlyStopping
+from typing import List
 
 from custom_early_stopping import CustomEarlyStopping
 from data_processing import DataProcessing
@@ -16,10 +18,10 @@ class ChessEvaluationModel:
 
     @staticmethod
     def __create_model(
-            bitmap_shape,
-            additional_features_shape,
-            activation_function,
-            dropout_rate,
+        bitmap_shape,
+        additional_features_shape,
+        activation_function,
+        dropout_rate,
     ) -> models.Model:
         # define the inputs
         input_cnn = Input(shape=bitmap_shape)
@@ -93,7 +95,7 @@ class ChessEvaluationModel:
         )
 
     @staticmethod
-    def plot_history(history, plot_path: str):
+    def plot_history(history, plot_path: Path):
         # Plot the training loss
         history = history.history
         n = np.arange(1, len(history["loss"]))
@@ -137,16 +139,16 @@ class ChessEvaluationModel:
         return self.model.summary()
 
     def initialize(
-            self,
-            bitmap_shape: tuple,
-            additional_features_shape: tuple,
-            optimizer,
-            activation_function,
-            dropout_rate,
-            loss=None,  # Dict with key the name of the output layer and value the loss function
-            loss_weights: list = None,  # We can specify different weight for each loss
-            metrics: list = None,  # list of metrics to evaluate model
-            path_to_scalers: str = None,  # path to scalers
+        self,
+        bitmap_shape: tuple,
+        additional_features_shape: tuple,
+        optimizer,
+        activation_function,
+        dropout_rate,
+        loss=None,  # Dict with key the name of the output layer and value the loss function
+        loss_weights: list = None,  # We can specify different weight for each loss
+        metrics: list = None,  # list of metrics to evaluate model
+        path_to_scalers: Path = None,  # path to scalers
     ) -> None:
 
         if loss is None:
@@ -181,15 +183,17 @@ class ChessEvaluationModel:
             self.data_processing_obj.load_scalers(path=path_to_scalers)
 
     def train_validate(
-            self,
-            train_data: list,  # list with 2 elements: [cnn_features, additional_features]
-            train_target: list,
-            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-            val_data: list,  # list with 2 elements: [cnn_features, additional_features]
-            val_target: list,
-            # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
-            epochs: int = 25,
-            batch_size: int = 512,
+        self,
+        # list with 2 elements: [cnn_features, additional_features]
+        train_data: List[np.ndarray],
+        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+        train_target: List[np.ndarray],
+        # list with 2 elements: [cnn_features, additional_features]
+        val_data: List[np.ndarray],
+        # list with 3 elements: [position_eval, num_turns_to_mate, binary for eval (0) or mate (1)]
+        val_target: List[np.ndarray],
+        epochs: int = 25,
+        batch_size: int = 512,
     ) -> dict:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
@@ -221,25 +225,20 @@ class ChessEvaluationModel:
             verbose=1,
         )
 
-    def test(self, test_data, test_target, batch_size: int = 128):
+    def test(self, test_data: List[np.ndarray], test_target: List[np.ndarray], batch_size: int = 128):
         # TODO: Fix this to work with the new normalization (or rather, lack thereof for mate data)
         # reshape data so we can transform
         test_eval_reshaped = test_target[0].reshape(-1, 1)
         test_mate_reshaped = test_target[1].reshape(-1, 1)
 
         # transform test targets
-        test_eval_normalized = self.data_processing_obj.transform(
-            test_eval_reshaped, data_type="eval"
-        )
-        test_mate_normalized = self.data_processing_obj.transform(
-            test_mate_reshaped, data_type="mate"
-        )
+        test_eval_normalized = self.data_processing_obj.transform(test_eval_reshaped)
 
-        test_target = [test_eval_normalized, test_mate_normalized, test_target[2]]
+        test_target = [test_eval_normalized, test_mate_reshaped, test_target[2]]
 
         return self.model.evaluate(test_data, test_target, batch_size=batch_size)
 
-    def get_mse_inverse_transform(self, test_data, test_target):
+    def get_mse_inverse_transform(self, test_data: List[np.ndarray], test_target: List[np.ndarray]):
         predictions = self.predict(test_data)
 
         eval_predictions_inversed = self.data_processing_obj.inverse_transform(
@@ -253,11 +252,11 @@ class ChessEvaluationModel:
 
         return mse_eval, mse_mate, accuracy_is_mate
 
-    def predict(self, data):
+    def predict(self, data: List[np.ndarray]) -> np.ndarray:
         return self.model.predict(data)
 
-    def save_model(self, model_path):
+    def save_model(self, model_path: Path) -> None:
         self.model.save(model_path)
 
-    def load_model(self, model_path):
+    def load_model(self, model_path: Path) -> None:
         self.model = models.load_model(model_path)

@@ -8,7 +8,6 @@ import chess
 class PlayChess:
 
     def __init__(self):
-        self.input_processing_obj = ChessDataProcessor("","")
         self.chess_eval = ChessEvaluationModel()
 
     def analyze(self, *args):
@@ -19,13 +18,13 @@ class PlayChess:
             curr_board = args[0]
 
         fen_string = curr_board.fen()
-        bitmap, attr = self.input_processing_obj.preprocess_fen(fen_string)
+        bitmap, attr = ChessDataProcessor.preprocess_fen(fen_string)
         prediction = self.chess_eval.predict([bitmap, attr])
         if len(args) == 0:
             print(prediction)
         return prediction
 
-    def predict_best_move(self, curr_board) -> list:
+    def predict_best_move(self, curr_board: chess.Board) -> list:
         turn = curr_board.turn
         eval_moves = []
         mate_moves = []
@@ -37,33 +36,33 @@ class PlayChess:
             # analyze position and remember the best one, analyze is not yet implemented
             prediction = self.analyze(new_board)
 
-            eval = prediction[0].item()
-            moves_till_mate = prediction[1].item()
+            evaluation = prediction[0].item()
+            moves_til_mate = prediction[1].item()
             is_mate = prediction[2].item()
 
             if turn:
-                if is_mate > 0.5 and moves_till_mate >= 0:
-                    mate_moves.append((curr_board.san(move), moves_till_mate))
+                if is_mate > 0.5 and moves_til_mate >= 0:
+                    mate_moves.append((curr_board.san(move), moves_til_mate))
                 elif is_mate > 0.5:
-                    opponent_mates.append((curr_board.san(move), moves_till_mate))
+                    opponent_mates.append((curr_board.san(move), moves_til_mate))
                 else:
-                    eval_moves.append((curr_board.san(move), eval))
+                    eval_moves.append((curr_board.san(move), evaluation))
             else:
-                if is_mate > 0.5 and moves_till_mate <= 0:
-                    mate_moves.append((curr_board.san(move), moves_till_mate))
+                if is_mate > 0.5 and moves_til_mate <= 0:
+                    mate_moves.append((curr_board.san(move), moves_til_mate))
                 elif is_mate > 0.5:
-                    opponent_mates.append((curr_board.san(move), moves_till_mate))
+                    opponent_mates.append((curr_board.san(move), moves_til_mate))
                 else:
-                    eval_moves.append((curr_board.san(move), eval))
+                    eval_moves.append((curr_board.san(move), evaluation))
 
         if turn:
-            eval_moves.sort(key=lambda x: x[1], reverse = True)
+            eval_moves.sort(key=lambda x: x[1], reverse=True)
             mate_moves.sort(key=lambda x: x[1])
             opponent_mates.sort(key=lambda x: x[1])
         else:
             eval_moves.sort(key=lambda x: x[1])
-            mate_moves.sort(key=lambda x: x[1], reverse = True)
-            opponent_mates.sort(key = lambda x: x[1], reverse = True)
+            mate_moves.sort(key=lambda x: x[1], reverse=True)
+            opponent_mates.sort(key=lambda x: x[1], reverse=True)
 
         return eval_moves, mate_moves, opponent_mates
 
@@ -134,13 +133,13 @@ class PlayChess:
                     potential_opponent_mates.append((move[0], opp_mate_moves[0][1]))
 
         if turn:
-            potential_mate_moves.sort(key = lambda x: x[1])
-            potential_opponent_mates.sort(key = lambda x: x[1])
-            potential_eval_moves.sort(key = lambda x: x[1], reverse = True)
+            potential_mate_moves.sort(key=lambda x: x[1])
+            potential_opponent_mates.sort(key=lambda x: x[1])
+            potential_eval_moves.sort(key=lambda x: x[1], reverse=True)
         else:
-            potential_mate_moves.sort(key = lambda x: x[1], reverse = True)
-            potential_opponent_mates.sort(key = lambda x: x[1], reverse = True)
-            potential_eval_moves.sort(key = lambda x: x[1])
+            potential_mate_moves.sort(key=lambda x: x[1], reverse=True)
+            potential_opponent_mates.sort(key=lambda x: x[1], reverse=True)
+            potential_eval_moves.sort(key=lambda x: x[1])
 
         print(potential_mate_moves, potential_eval_moves, potential_opponent_mates, stale_mates)
         if len(potential_mate_moves) > 0:
@@ -154,7 +153,7 @@ class PlayChess:
     def play_game(self, colour: int):
         board = chess.Board()
         turn = 1
-        while not(board.is_checkmate()):
+        while not (board.is_checkmate()):
             if colour == turn:
                 input1 = input("Please give your move: ")
                 board.push_san(input1)
@@ -165,6 +164,7 @@ class PlayChess:
                 board.push_san(model_move[0])
                 colour *= -1
         print("end of game")
+
 
 def main():
     play_chess = PlayChess()

@@ -5,24 +5,22 @@ import csv
 import os
 from enum import Flag, auto
 from functools import reduce
+from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
 
 
-class Fields(Flag):
+class ChessDataFields(Flag):
     BITMAP = auto()
     ATTRIBUTE = auto()
     LABEL = auto()
     ALL = BITMAP | ATTRIBUTE | LABEL
 
-    # def __str__(self):
-    #     return self.name
-
     @staticmethod
-    def from_string(s: str) -> Fields:
+    def from_string(s: str) -> ChessDataFields:
         try:
-            return Fields[s.upper()]
+            return ChessDataFields[s.upper()]
         except KeyError:
             raise ValueError("Supply a valid Fields flag")
 
@@ -43,7 +41,7 @@ class ChessDataProcessor:
         "k": 11,
     }
 
-    def __init__(self, data_path: str, save_dir: str) -> None:
+    def __init__(self, data_path: Path, save_dir: Path) -> None:
         self.data_path = data_path
         self.save_dir = save_dir
 
@@ -100,12 +98,12 @@ class ChessDataProcessor:
         return (0, int(pos_eval[1:]), 1) if pos_eval[0] == "#" else (int(pos_eval), 0, 0)
 
     @staticmethod
-    def __create_array(field: Fields, length: int) -> np.ndarray:
-        if field is Fields.BITMAP:
+    def __create_array(field: ChessDataFields, length: int) -> np.ndarray:
+        if field is ChessDataFields.BITMAP:
             return np.empty((length, 8, 8, 12), np.bool)
-        elif field is Fields.ATTRIBUTE:
+        elif field is ChessDataFields.ATTRIBUTE:
             return np.empty((length, 15), np.uint8)
-        elif field is Fields.LABEL:
+        elif field is ChessDataFields.LABEL:
             return np.empty(
                 (length,),
                 [("eval", np.int16), ("mate_turns", np.int16), ("is_mate", np.bool)],
@@ -114,18 +112,17 @@ class ChessDataProcessor:
         raise ValueError("field should be a singular Fields flag")
 
     @staticmethod
-    def __get_value(field: Fields, row: List[str]):
-        if field is Fields.BITMAP:
+    def __get_value(field: ChessDataFields, row: List[str]):
+        if field is ChessDataFields.BITMAP:
             return ChessDataProcessor.__get_bitmap(row[0].split(" ", 1)[0])
-        elif field is Fields.ATTRIBUTE:
+        elif field is ChessDataFields.ATTRIBUTE:
             return ChessDataProcessor.__get_attrs(row[0].split(" ", 1)[1])
-        elif field is Fields.LABEL:
+        elif field is ChessDataFields.LABEL:
             return ChessDataProcessor.__get_labels(row[1])
-
         raise ValueError("field should be a singular Fields flag")
 
-    def preprocess(self, fields: Fields) -> None:
-        fields = [f for f in Fields if f in fields and f is not Fields.ALL]
+    def preprocess(self, fields: ChessDataFields) -> None:
+        fields = [f for f in ChessDataFields if f in fields and f is not ChessDataFields.ALL]
         print(
             f"Preprocessing the following fields: {', '.join(f'{f.name.lower()}s' for f in fields)}"
         )
@@ -170,13 +167,13 @@ class ChessDataProcessor:
 
         for field in fields:
             print(f"Saving eval {field.name.lower()}s to eval_{field.name.lower()}s.npy")
-            np.save(os.path.join(self.save_dir, f"eval_{field.name.lower()}s"), eval_outputs[field])
+            np.save(self.save_dir / f"eval_{field.name.lower()}s", eval_outputs[field])
             print(f"Saving mate {field.name.lower()}s to mate_{field.name.lower()}s.npy")
-            np.save(os.path.join(self.save_dir, f"mate_{field.name.lower()}s"), mate_outputs[field])
+            np.save(self.save_dir / f"mate_{field.name.lower()}s", mate_outputs[field])
 
     @staticmethod
     def preprocess_fen_new(fen_string: str):
-        fields = [f for f in Fields if f is not Fields.ALL]
+        fields = [f for f in ChessDataFields if f is not ChessDataFields.ALL]
 
         outputs = {f: ChessDataProcessor.__create_array(f, 1) for f in fields}
 
@@ -196,21 +193,21 @@ class ChessDataProcessor:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")
-    parser.add_argument("--data", help="Path to the chess dataset")
-    parser.add_argument("--save", help="Path to save the preprocessed data")
+    parser.add_argument("data", type=Path, help="Path to the chess dataset")
+    parser.add_argument("save", type=Path, help="Directory where preprocessed data will be saved")
     parser.add_argument(
         "-f",
         "--fields",
         nargs="+",
         help="Fields to preprocess",
-        type=Fields.from_string,
-        choices=list(Fields),
-        default=[Fields.ALL],
+        type=ChessDataFields.from_string,
+        choices=list(ChessDataFields),
+        default=[ChessDataFields.ALL],
     )
     args = parser.parse_args()
 
     cdp = ChessDataProcessor(args.data, args.save)
-    cdp.preprocess(reduce(Fields.__or__, args.fields))
+    cdp.preprocess(reduce(ChessDataFields.__or__, args.fields))
 
 
 if __name__ == "__main__":
