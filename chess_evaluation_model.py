@@ -55,16 +55,22 @@ class ChessEvaluationModel:
         flatten = layers.Flatten()(dropout_2)
 
         dense_cnn = layers.Dense(
-            400, activation=activation_function, kernel_initializer=initializers.RandomUniform()
+            400,
+            activation=activation_function,
+            kernel_initializer=initializers.RandomUniform(),
         )(flatten)
         dense_num = layers.Dense(
-            30, activation=activation_function, kernel_initializer=initializers.RandomUniform()
+            30,
+            activation=activation_function,
+            kernel_initializer=initializers.RandomUniform(),
         )(input_numerical)
         merged_layer = keras.layers.concatenate([dense_cnn, dense_num])
         dropout_3 = layers.Dropout(dropout_rate)(merged_layer)
 
         dense = layers.Dense(
-            215, activation=activation_function, kernel_initializer=initializers.RandomUniform()
+            215,
+            activation=activation_function,
+            kernel_initializer=initializers.RandomUniform(),
         )(dropout_3)
 
         # Output evaluation of position
@@ -95,39 +101,44 @@ class ChessEvaluationModel:
         )
 
     @staticmethod
-    def plot_history(history, plot_path: Path):
+    def plot_history(history, plot_path: Path, type_loss="eval"):
         # Plot the training loss
         history = history.history
         n = np.arange(1, len(history["loss"]))
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(
-            n,
-            history["eval_score_loss"][1:],
-            label="Train eval loss",
-            linestyle="dashed",
-        )
-        plt.plot(
-            n,
-            history["mate_turns_loss"][1:],
-            label="Train mate loss",
-            linestyle="dashed",
-        )
+        if type_loss == "eval":
+            plt.plot(
+                n,
+                history["eval_score_loss"][1:],
+                label="Train eval loss",
+                linestyle="dashed",
+            )
 
-        if "val_loss" in history:
+            if "val_loss" in history:
+                plt.plot(
+                    n,
+                    history["val_eval_score_loss"][1:],
+                    label="Validation eval loss",
+                    linestyle="solid",
+                )
+        elif type_loss == "mate":
+
             plt.plot(
                 n,
-                history["val_eval_score_loss"][1:],
-                label="Validation eval loss",
-                linestyle="solid",
+                history["mate_turns_loss"][1:],
+                label="Train mate loss",
+                linestyle="dashed",
             )
-            plt.plot(
-                n,
-                history["val_mate_turns_loss"][1:],
-                label="Validation mate loss",
-                linestyle="solid",
-            )
+
+            if "val_loss" in history:
+                plt.plot(
+                    n,
+                    history["val_mate_turns_loss"][1:],
+                    label="Validation mate loss",
+                    linestyle="solid",
+                )
 
         plt.title("Loss during training")
         plt.xlabel("Epoch #")
@@ -225,7 +236,12 @@ class ChessEvaluationModel:
             verbose=1,
         )
 
-    def test(self, test_data: List[np.ndarray], test_target: List[np.ndarray], batch_size: int = 128):
+    def test(
+        self,
+        test_data: List[np.ndarray],
+        test_target: List[np.ndarray],
+        batch_size: int = 128,
+    ):
         # TODO: Fix this to work with the new normalization (or rather, lack thereof for mate data)
         # reshape data so we can transform
         test_eval_reshaped = test_target[0].reshape(-1, 1)
@@ -238,7 +254,9 @@ class ChessEvaluationModel:
 
         return self.model.evaluate(test_data, test_target, batch_size=batch_size)
 
-    def get_mse_inverse_transform(self, test_data: List[np.ndarray], test_target: List[np.ndarray]):
+    def get_mse_inverse_transform(
+        self, test_data: List[np.ndarray], test_target: List[np.ndarray]
+    ):
         predictions = self.predict(test_data)
 
         eval_predictions_inversed = self.data_processing_obj.inverse_transform(

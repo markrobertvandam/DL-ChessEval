@@ -9,8 +9,13 @@ from chess_evaluation_model import ChessEvaluationModel
 
 class ModelParameterPipeline:
     def __init__(
-        self, bitmaps: np.ndarray, attributes: np.ndarray, labels: np.ndarray,
-        plots_dir: Path, models_dir: Path, hyper_params: Dict
+        self,
+        bitmaps: np.ndarray,
+        attributes: np.ndarray,
+        labels: np.ndarray,
+        plots_dir: Path,
+        models_dir: Path,
+        hyper_params: Dict,
     ):
         self.bitmaps = bitmaps
         self.attributes = attributes
@@ -42,7 +47,15 @@ class ModelParameterPipeline:
             self.bitmaps, self.attributes, self.labels
         )
 
-    def run(self, learning_rate, activation_function, optimizer, dropout_rate, batch_size, epoch_number):
+    def run(
+        self,
+        learning_rate,
+        activation_function,
+        optimizer,
+        dropout_rate,
+        batch_size,
+        epoch_number,
+    ):
         if learning_rate is None:
             learning_rate = 0.01
         if activation_function is None:
@@ -65,7 +78,7 @@ class ModelParameterPipeline:
             optimizer,
             activation_function,
             dropout_rate,
-            path_to_scalers=None
+            path_to_scalers=None,
         )
 
         history = chess_eval.train_validate(
@@ -79,35 +92,45 @@ class ModelParameterPipeline:
             [
                 self.test_labels["eval"],
                 self.test_labels["mate_turns"],
-                self.test_labels["is_mate"]
+                self.test_labels["is_mate"],
             ],
             epoch_number,
             batch_size,
         )
 
-        plot_name = (
-            "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}.pdf".format(
-                activation_function,
-                optimizer._name,
-                dropout_rate,
-                batch_size,
-                epoch_number,
-                learning_rate,
-            )
+        plot_name_eval = "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}_eval.pdf".format(
+            activation_function,
+            optimizer._name,
+            dropout_rate,
+            batch_size,
+            epoch_number,
+            learning_rate,
         )
 
-        model_name = (
-            "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}".format(
-                activation_function,
-                optimizer._name,
-                dropout_rate,
-                batch_size,
-                epoch_number,
-                learning_rate,
-            )
+        plot_name_mate = "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}_mate.pdf".format(
+            activation_function,
+            optimizer._name,
+            dropout_rate,
+            batch_size,
+            epoch_number,
+            learning_rate,
         )
 
-        chess_eval.plot_history(history, self.plots_dir / plot_name)
+        model_name = "af_{}_op_{}_dr_{}_bs_{}_ep_{}_lr_{}".format(
+            activation_function,
+            optimizer._name,
+            dropout_rate,
+            batch_size,
+            epoch_number,
+            learning_rate,
+        )
+
+        chess_eval.plot_history(
+            history, self.plots_dir / plot_name_eval, type_loss="eval"
+        )
+        chess_eval.plot_history(
+            history, self.plots_dir / plot_name_mate, type_loss="mate"
+        )
         chess_eval.save_model(self.models_dir / model_name)
 
     def run_pipeline(self):
@@ -118,7 +141,17 @@ class ModelParameterPipeline:
             for optimizer in self.hyper_params.get("optimizer", [None]):
                 for dropout_rate in self.hyper_params.get("dropout_rate", [None]):
                     for batch_size in self.hyper_params.get("batch_size", [None]):
-                        for epoch_number in self.hyper_params.get("epoch_number", [None]):
-                            for learning_rate in self.hyper_params.get("learning_rate", [None]):
-                                self.run(learning_rate, activation_function, optimizer,
-                                         dropout_rate, batch_size, epoch_number)
+                        for epoch_number in self.hyper_params.get(
+                            "epoch_number", [None]
+                        ):
+                            for learning_rate in self.hyper_params.get(
+                                "learning_rate", [None]
+                            ):
+                                self.run(
+                                    learning_rate,
+                                    activation_function,
+                                    optimizer,
+                                    dropout_rate,
+                                    batch_size,
+                                    epoch_number,
+                                )
