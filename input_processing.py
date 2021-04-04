@@ -95,7 +95,9 @@ class ChessDataProcessor:
 
     @staticmethod
     def __get_labels(pos_eval: str) -> Tuple[int, int, int]:
-        return (0, int(pos_eval[1:]), 1) if pos_eval[0] == "#" else (int(pos_eval), 0, 0)
+        return (
+            (0, int(pos_eval[1:]), 1) if pos_eval[0] == "#" else (int(pos_eval), 0, 0)
+        )
 
     @staticmethod
     def __create_array(field: ChessDataFields, length: int) -> np.ndarray:
@@ -122,7 +124,9 @@ class ChessDataProcessor:
         raise ValueError("field should be a singular Fields flag")
 
     def preprocess(self, fields: ChessDataFields) -> None:
-        fields = [f for f in ChessDataFields if f in fields and f is not ChessDataFields.ALL]
+        fields = [
+            f for f in ChessDataFields if f in fields and f is not ChessDataFields.ALL
+        ]
         print(
             f"Preprocessing the following fields: {', '.join(f'{f.name.lower()}s' for f in fields)}"
         )
@@ -166,9 +170,13 @@ class ChessDataProcessor:
             print(f"\nTotal rows processed: {mate_counter + eval_counter}\n")
 
         for field in fields:
-            print(f"Saving eval {field.name.lower()}s to eval_{field.name.lower()}s.npy")
+            print(
+                f"Saving eval {field.name.lower()}s to eval_{field.name.lower()}s.npy"
+            )
             np.save(self.save_dir / f"eval_{field.name.lower()}s", eval_outputs[field])
-            print(f"Saving mate {field.name.lower()}s to mate_{field.name.lower()}s.npy")
+            print(
+                f"Saving mate {field.name.lower()}s to mate_{field.name.lower()}s.npy"
+            )
             np.save(self.save_dir / f"mate_{field.name.lower()}s", mate_outputs[field])
 
     @staticmethod
@@ -190,12 +198,151 @@ class ChessDataProcessor:
             np.array([ChessDataProcessor.__get_attrs(fen_attrs)]),
         ]
 
+    @staticmethod
+    def split_train_test(data_path, train_percentage, train_path, test_path):
+        eval_bitmaps = np.load(os.path.join(data_path, "eval_bitmaps.npy"))
+        eval_attributes = np.load(os.path.join(data_path, "eval_attributes.npy"))
+        eval_labels = np.load(os.path.join(data_path, "eval_labels.npy"))
+
+        mate_bitmaps = np.load(os.path.join(data_path, "mate_bitmaps.npy"))
+        mate_attributes = np.load(os.path.join(data_path, "mate_attributes.npy"))
+        mate_labels = np.load(os.path.join(data_path, "mate_labels.npy"))
+
+        index_splitter_eval = int(len(eval_bitmaps) * train_percentage)
+        index_splitter_mate = int(len(mate_bitmaps) * train_percentage)
+
+        # Train eval
+        train_eval_bitmaps = eval_bitmaps[:index_splitter_eval]
+        train_eval_attributes = eval_attributes[:index_splitter_eval]
+        train_eval_labels = eval_labels[:index_splitter_eval]
+        # Test eval
+        test_eval_bitmaps = eval_bitmaps[index_splitter_eval:]
+        test_eval_attributes = eval_attributes[index_splitter_eval:]
+        test_eval_labels = eval_labels[index_splitter_eval:]
+        # Train mate
+        train_mate_bitmaps = mate_bitmaps[:index_splitter_mate]
+        train_mate_attributes = mate_attributes[:index_splitter_mate]
+        train_mate_labels = mate_labels[:index_splitter_mate]
+        # Test mate
+        test_mate_bitmaps = mate_bitmaps[index_splitter_mate:]
+        test_mate_attributes = mate_attributes[index_splitter_mate:]
+        test_mate_labels = mate_labels[index_splitter_mate:]
+
+        # Save train eval
+        np.save(
+            os.path.join(
+                train_path, "train_eval_bitmaps_{}.npy".format(train_percentage)
+            ),
+            train_eval_bitmaps,
+        )
+        np.save(
+            os.path.join(
+                train_path, "train_eval_attributes_{}.npy".format(train_percentage)
+            ),
+            train_eval_attributes,
+        )
+        np.save(
+            os.path.join(
+                train_path, "train_eval_labels_{}.npy".format(train_percentage)
+            ),
+            train_eval_labels,
+        )
+        # Save test eval
+        np.save(
+            os.path.join(
+                test_path,
+                "test_eval_bitmaps_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_bitmaps,
+        )
+        np.save(
+            os.path.join(
+                test_path,
+                "test_eval_attrbiutes_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_attributes,
+        )
+        np.save(
+            os.path.join(
+                test_path,
+                "test_eval_labels_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_labels,
+        )
+        # Save train mate
+        np.save(
+            os.path.join(
+                train_path, "train_mate_bitmaps_{}.npy".format(train_percentage)
+            ),
+            train_mate_bitmaps,
+        )
+        np.save(
+            os.path.join(
+                train_path, "train_mate_attributes_{}.npy".format(train_percentage)
+            ),
+            train_mate_attributes,
+        )
+        np.save(
+            os.path.join(
+                train_path, "train_mate_labels_{}.npy".format(train_percentage)
+            ),
+            train_mate_labels,
+        )
+        # Save test mate
+        np.save(
+            os.path.join(
+                test_path,
+                "test_mate_bitmaps_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_bitmaps,
+        )
+        np.save(
+            os.path.join(
+                test_path,
+                "test_mate_attrbiutes_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_attributes,
+        )
+        np.save(
+            os.path.join(
+                test_path,
+                "test_mate_labels_{}.npy".format(round(1 - train_percentage, 2)),
+            ),
+            test_eval_labels,
+        )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess the chess dataset")
-    parser.add_argument("data", type=Path, help="Path to the chess dataset")
-    parser.add_argument("save", type=Path, help="Directory where preprocessed data will be saved")
-    parser.add_argument(
+
+    sp = parser.add_subparsers(title="Command", dest="command")
+
+    split_process = sp.add_parser(
+        "split-data", help="Split train test data into separate files"
+    )
+    split_process.add_argument(
+        "saved_preprocessed_data",
+        help="Path to the already saved preprocessed data using 'process-input' command",
+    )
+    split_process.add_argument(
+        "train_percentage",
+        type=float,
+        default=0.9,
+        help="Set percantage to split train test",
+    )
+    split_process.add_argument(
+        "train_save", type=Path, help="Directory where train data will be saved"
+    )
+    split_process.add_argument(
+        "test_save", type=Path, help="Directory where test data will be saved"
+    )
+
+    process_input = sp.add_parser("process-input", help="Process the raw chess dataset")
+    process_input.add_argument("data", type=Path, help="Path to the chess dataset")
+    process_input.add_argument(
+        "save", type=Path, help="Directory where preprocessed data will be saved"
+    )
+    process_input.add_argument(
         "-f",
         "--fields",
         nargs="+",
@@ -204,10 +351,19 @@ def main() -> None:
         choices=list(ChessDataFields),
         default=[ChessDataFields.ALL],
     )
+
     args = parser.parse_args()
 
-    cdp = ChessDataProcessor(args.data, args.save)
-    cdp.preprocess(reduce(ChessDataFields.__or__, args.fields))
+    if args.command == "process-input":
+        cdp = ChessDataProcessor(args.data, args.save)
+        cdp.preprocess(reduce(ChessDataFields.__or__, args.fields))
+    elif args.command == "split-data":
+        ChessDataProcessor.split_train_test(
+            args.saved_preprocessed_data,
+            args.train_percentage,
+            args.train_save,
+            args.test_save,
+        )
 
 
 if __name__ == "__main__":
