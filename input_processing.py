@@ -258,7 +258,7 @@ class ChessDataProcessor:
         np.save(
             os.path.join(
                 test_path,
-                "test_eval_attrbiutes_{}.npy".format(round(1 - train_percentage, 2)),
+                "test_eval_attributes_{}.npy".format(round(1 - train_percentage, 2)),
             ),
             test_eval_attributes,
         )
@@ -299,7 +299,7 @@ class ChessDataProcessor:
         np.save(
             os.path.join(
                 test_path,
-                "test_mate_attrbiutes_{}.npy".format(round(1 - train_percentage, 2)),
+                "test_mate_attributes_{}.npy".format(round(1 - train_percentage, 2)),
             ),
             test_eval_attributes,
         )
