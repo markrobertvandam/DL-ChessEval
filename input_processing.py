@@ -230,84 +230,54 @@ class ChessDataProcessor:
 
         # Save train eval
         np.save(
-            os.path.join(
-                train_path, "train_eval_bitmaps_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "eval_bitmaps.npy"),
             train_eval_bitmaps,
         )
         np.save(
-            os.path.join(
-                train_path, "train_eval_attributes_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "eval_attributes.npy"),
             train_eval_attributes,
         )
         np.save(
-            os.path.join(
-                train_path, "train_eval_labels_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "eval_labels.npy"),
             train_eval_labels,
         )
         # Save test eval
         np.save(
-            os.path.join(
-                test_path,
-                "test_eval_bitmaps_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "eval_bitmaps.npy"),
             test_eval_bitmaps,
         )
         np.save(
-            os.path.join(
-                test_path,
-                "test_eval_attributes_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "eval_attributes.npy"),
             test_eval_attributes,
         )
         np.save(
-            os.path.join(
-                test_path,
-                "test_eval_labels_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "eval_labels.npy"),
             test_eval_labels,
         )
         # Save train mate
         np.save(
-            os.path.join(
-                train_path, "train_mate_bitmaps_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "mate_bitmaps.npy"),
             train_mate_bitmaps,
         )
         np.save(
-            os.path.join(
-                train_path, "train_mate_attributes_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "mate_attributes.npy"),
             train_mate_attributes,
         )
         np.save(
-            os.path.join(
-                train_path, "train_mate_labels_{}.npy".format(train_percentage)
-            ),
+            os.path.join(train_path, "mate_labels.npy"),
             train_mate_labels,
         )
         # Save test mate
         np.save(
-            os.path.join(
-                test_path,
-                "test_mate_bitmaps_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "mate_bitmaps.npy"),
             test_eval_bitmaps,
         )
         np.save(
-            os.path.join(
-                test_path,
-                "test_mate_attributes_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "mate_attributes.npy"),
             test_eval_attributes,
         )
         np.save(
-            os.path.join(
-                test_path,
-                "test_mate_labels_{}.npy".format(round(1 - train_percentage, 2)),
-            ),
+            os.path.join(test_path, "mate_labels.npy"),
             test_eval_labels,
         )
 
