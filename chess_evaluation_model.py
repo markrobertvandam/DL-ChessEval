@@ -9,6 +9,8 @@ from typing import List
 from custom_early_stopping import CustomEarlyStopping
 from data_processing import DataProcessing
 from sklearn.metrics import mean_squared_error, accuracy_score
+import pickle
+import os
 
 
 class ChessEvaluationModel:
@@ -104,6 +106,10 @@ class ChessEvaluationModel:
     def plot_history(history, plot_path: Path, type_loss="eval"):
         # Plot the training loss
         history = history.history
+        # Save history dict so we can have exact values
+        with open(str(plot_path).split(".pdf")[0] + ".pkl", "wb") as handle:
+            pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         n = np.arange(1, len(history["loss"]))
         plt.style.use("ggplot")
         plt.figure()
@@ -225,7 +231,7 @@ class ChessEvaluationModel:
         train_target = [train_eval_normalized, train_mate_reshaped, train_target[2]]
         val_target = [val_eval_normalized, val_mate_reshaped, val_target[2]]
 
-        es = CustomEarlyStopping(patience=10, d_eval=0.2, d_mate=0.2)
+        es = CustomEarlyStopping(patience=10, d_eval=0.0001, d_mate=0.05)
         return self.model.fit(
             train_data,
             train_target,
