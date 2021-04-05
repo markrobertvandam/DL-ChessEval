@@ -270,15 +270,15 @@ class ChessDataProcessor:
         # Save test mate
         np.save(
             os.path.join(test_path, "mate_bitmaps.npy"),
-            test_eval_bitmaps,
+            test_mate_bitmaps,
         )
         np.save(
             os.path.join(test_path, "mate_attributes.npy"),
-            test_eval_attributes,
+            test_mate_attributes,
         )
         np.save(
             os.path.join(test_path, "mate_labels.npy"),
-            test_eval_labels,
+            test_mate_labels,
         )
 
 
