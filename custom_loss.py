@@ -9,8 +9,12 @@ class CustomLossMetrics:
         self.mse = MeanSquaredError()
 
     def overall_loss(self, y_true, y_pred):
-        (eval_true, mate_true, is_mate_true) = tf.split(y_true, num_or_size_splits=3, axis=1)
-        (eval_pred, mate_pred, is_mate_pred) = tf.split(y_pred, num_or_size_splits=3, axis=1)
+        (eval_true, mate_true, is_mate_true) = tf.split(
+            y_true, num_or_size_splits=3, axis=1
+        )
+        (eval_pred, mate_pred, is_mate_pred) = tf.split(
+            y_pred, num_or_size_splits=3, axis=1
+        )
         eval_pred = tf.where(tf.equal(is_mate_true, 0), eval_pred, eval_true)
         mate_pred = tf.where(tf.equal(is_mate_true, 1), mate_pred, mate_true)
         eval_loss = self.mse(eval_true, eval_pred)
