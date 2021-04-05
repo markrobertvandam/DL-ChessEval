@@ -170,7 +170,7 @@ def tune(args: argparse.Namespace) -> None:
         "batch_size": [256, 512],
         "activation_function": ["relu", "elu"],
         "dropout_rate": [0.3, 0.5],
-        "epoch_number": [3],
+        "epoch_number": [50],
     }
 
     model_param_pipeline = ModelParameterPipeline(

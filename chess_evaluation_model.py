@@ -1,9 +1,12 @@
 from pathlib import Path
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers, models, initializers, Input
 from typing import List
+
+from tensorflow.python.keras.callbacks import EarlyStopping
 from custom_early_stopping import CustomEarlyStopping
 from custom_loss import CustomLossMetrics
 from data_processing import DataProcessing
@@ -102,23 +105,52 @@ class ChessEvaluationModel:
         )
 
     @staticmethod
-    def plot_history(history, plot_path: str):
+    def plot_history(history, plot_path: str, type_loss="eval"):
+        # Plot the training loss
         history = history.history
-        # plot the training loss and accuracy
+        # Save history dict so we can have exact values
+        with open(str(plot_path).split(".pdf")[0] + ".pkl", "wb") as handle:
+            pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         n = np.arange(1, len(history["loss"]))
         plt.style.use("ggplot")
         plt.figure()
 
-        plt.plot(n, history["eval_mse"][1:], label="train_eval_mse")
-        plt.plot(n, history["eval_mse"][1:], label="train_eval_mse")
+        if type_loss == "eval":
+            plt.plot(
+                n,
+                history["eval_mse"][1:],
+                label="Train eval loss",
+                linestyle="dashed",
+            )
 
-        if "val_loss" in history:
-            plt.plot(n, history["val_eval_mse"][1:], label="val_eval_mse")
-            plt.plot(n, history["val_eval_mse"][1:], label="val_mate_mse")
+            if "val_loss" in history:
+                plt.plot(
+                    n,
+                    history["val_eval_mse"][1:],
+                    label="Validation eval loss",
+                    linestyle="solid",
+                )
+        elif type_loss == "mate":
 
-        plt.title("Training Loss and Accuracy")
+            plt.plot(
+                n,
+                history["mate_mse"][1:],
+                label="Train mate loss",
+                linestyle="dashed",
+            )
+
+            if "val_loss" in history:
+                plt.plot(
+                    n,
+                    history["val_mate_mse"][1:],
+                    label="Validation mate loss",
+                    linestyle="solid",
+                )
+
+        plt.title("Loss during training")
         plt.xlabel("Epoch #")
-        plt.ylabel("Loss/Accuracy")
+        plt.ylabel("Loss")
         plt.legend()
         plt.savefig(plot_path)
 
@@ -189,10 +221,11 @@ class ChessEvaluationModel:
 
         train_eval_reshaped = train_target[0].reshape(-1, 1)
         train_mate_reshaped = train_target[1].reshape(-1, 1)
+        train_target = train_target[2].reshape(-1, 1)
 
         val_eval_reshaped = val_target[0].reshape(-1, 1)
         val_mate_reshaped = val_target[1].reshape(-1, 1)
-
+        val_target = val_target[2].reshape(-1, 1)
         # fit the training targets for eval and mate
         self.data_processing_obj.fit_scalers(train_eval_reshaped)
 
@@ -202,10 +235,14 @@ class ChessEvaluationModel:
         # transform val targets
         val_eval_normalized = self.data_processing_obj.transform(val_eval_reshaped)
 
-        train_target = [train_eval_normalized, train_mate_reshaped, train_target[2]]
-        val_target = [val_eval_normalized, val_mate_reshaped, val_target[2]]
+        train_target = np.concatenate(
+            [train_eval_normalized, train_mate_reshaped, train_target], axis=1
+        )
+        val_target = np.concatenate(
+            [val_eval_normalized, val_mate_reshaped, val_target], axis=1
+        )
 
-        es = CustomEarlyStopping(patience=10, d_eval=0.2, d_mate=0.2)
+        es = EarlyStopping(patience=10, min_delta=2e-1, restore_best_weights=True)
         return self.model.fit(
             train_data,
             train_target,
