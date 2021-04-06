@@ -242,7 +242,7 @@ class ChessEvaluationModel:
             [val_eval_normalized, val_mate_reshaped, val_target], axis=1
         )
 
-        es = EarlyStopping(patience=10, min_delta=2e-1, restore_best_weights=True)
+        es = EarlyStopping(patience=10, min_delta=1e-2, restore_best_weights=True)
         return self.model.fit(
             train_data,
             train_target,

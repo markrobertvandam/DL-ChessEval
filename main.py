@@ -167,8 +167,7 @@ def tune(args: argparse.Namespace) -> None:
 
     # Test parameter pipeline
     dict_of_params = {
-        "batch_size": [256, 512],
-        "activation_function": ["relu", "elu"],
+        "batch_size": [512, 256],
         "dropout_rate": [0.3, 0.5],
         "epoch_number": [50],
     }

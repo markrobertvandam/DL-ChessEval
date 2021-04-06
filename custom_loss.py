@@ -22,7 +22,7 @@ class CustomLossMetrics:
         is_mate_loss = self.bce(is_mate_true, is_mate_pred)
         # print(f"is_mate_loss: {loss_is_mate} - eval_loss: {loss_eval} - mate_loss: {loss_mate}")
         # tf.print(" - is_mate_loss: ", loss_is_mate, "- eval_loss: ", loss_eval, "- mate_loss:", loss_mate, end="\r")
-        return eval_loss + 10 * mate_loss + is_mate_loss
+        return 2e3 * eval_loss + mate_loss + 10 * is_mate_loss
 
     def eval_mse(self, y_true, y_pred):
         # Apparently y_true is a tensor of shape (None, 1) and I don't know how to unpack the original bits
