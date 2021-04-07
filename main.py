@@ -108,6 +108,43 @@ def parse_args() -> argparse.Namespace:
     full = sp.add_parser(
         "full-run", parents=[shared], help="Do a run with all the data"
     )
+    full.add_argument("test_data", type=Path, help="Input files directory")
+    full.add_argument(
+        "-teb",
+        "--test-eval-bitmaps",
+        default="eval_bitmaps.npy",
+        help="Override eval input bitmap filename",
+    )
+    full.add_argument(
+        "-tea",
+        "--test-eval-attributes",
+        default="eval_attributes.npy",
+        help="Override additional eval input attributes filename",
+    )
+    full.add_argument(
+        "-tel",
+        "--test-eval-labels",
+        default="eval_labels.npy",
+        help="Override eval input labels filename",
+    )
+    full.add_argument(
+        "-tmb",
+        "--test-mate-bitmaps",
+        default="mate_bitmaps.npy",
+        help="Override mate input bitmap filename",
+    )
+    full.add_argument(
+        "-tma",
+        "--test-mate-attributes",
+        default="mate_attributes.npy",
+        help="Override additional mate input attributes filename",
+    )
+    full.add_argument(
+        "-tml",
+        "--test-mate-labels",
+        default="mate_labels.npy",
+        help="Override mate input labels filename",
+    )
     full.add_argument(
         "model", type=Path, help="Directory where created model will be saved"
     )
@@ -131,26 +168,26 @@ def load_and_slice_data(
 
     bitmaps = np.concatenate(
         (
-            eval_bitmaps[eval_offset : eval_offset + n_eval],
-            mate_bitmaps[mate_offset : mate_offset + n_mate],
+            eval_bitmaps[eval_offset: eval_offset + n_eval],
+            mate_bitmaps[mate_offset: mate_offset + n_mate],
         )
     )
 
     attrs = np.concatenate(
         (
             np.load(args.data / args.eval_attributes)[
-                eval_offset : eval_offset + n_eval
+            eval_offset: eval_offset + n_eval
             ],
             np.load(args.data / args.mate_attributes)[
-                mate_offset : mate_offset + n_mate
+            mate_offset: mate_offset + n_mate
             ],
         )
     )
 
     labels = np.concatenate(
         (
-            np.load(args.data / args.eval_labels)[eval_offset : eval_offset + n_eval],
-            np.load(args.data / args.mate_labels)[mate_offset : mate_offset + n_mate],
+            np.load(args.data / args.eval_labels)[eval_offset: eval_offset + n_eval],
+            np.load(args.data / args.mate_labels)[mate_offset: mate_offset + n_mate],
         )
     )
 
@@ -193,21 +230,21 @@ def test(args: argparse.Namespace) -> None:
 def full_run(args: argparse.Namespace):
     from chess_evaluation_model import ChessEvaluationModel
 
-    bitmaps = np.load(args.bitmaps)
-    attributes = np.load(args.attributes)
-    labels = np.load(args.labels)
+    train_bitmaps = np.concatenate((np.load(args.data / args.eval_bitmaps),
+                                    np.load(args.data / args.mate_bitmaps)))
+    train_attributes = np.concatenate((np.load(args.data / args.eval_attributes),
+                                       np.load(args.data / args.mate_attributes)))
+    train_labels = np.concatenate((np.load(args.data / args.eval_labels),
+                                   np.load(args.data / args.mate_labels)))
+    test_bitmaps = np.concatenate((np.load(args.test_data / args.test_eval_bitmaps),
+                                   np.load(args.test_data / args.test_mate_bitmaps)))
+    test_attributes = np.concatenate((np.load(args.test_data / args.test_eval_attributes),
+                                      np.load(args.test_data / args.test_mate_attributes)))
+    test_labels = np.concatenate((np.load(args.test_data / args.test_eval_labels),
+                                  np.load(args.test_data / args.test_mate_labels)))
 
     chess_eval = ChessEvaluationModel()
     chess_eval.initialize((8, 8, 12), (15,), "Adam", "relu", 0.3)
-
-    (
-        train_bitmaps,
-        train_attributes,
-        train_labels,
-        test_bitmaps,
-        test_attributes,
-        test_labels,
-    ) = DataProcessing.train_test_split(bitmaps, attributes, labels)
 
     history = chess_eval.train_validate(
         [train_bitmaps, train_attributes],
