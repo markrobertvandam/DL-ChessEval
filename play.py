@@ -22,7 +22,7 @@ class PlayChess:
         prediction = self.chess_eval.predict([bitmap, attr])
         if len(args) == 0:
             print(prediction)
-        return prediction
+        return prediction[0]
 
     def predict_best_move(self, curr_board: chess.Board) -> list:
         turn = curr_board.turn
@@ -35,7 +35,6 @@ class PlayChess:
             new_board.push(move)
             # analyze position and remember the best one, analyze is not yet implemented
             prediction = self.analyze(new_board)
-
             evaluation = prediction[0].item()
             moves_til_mate = prediction[1].item()
             is_mate = prediction[2].item()
@@ -66,17 +65,15 @@ class PlayChess:
 
         return eval_moves, mate_moves, opponent_mates
 
-    def kaufmann_test(self):
+    def kaufman_test(self):
 
-        with open("kaufmann.txt", "r") as f:
+        with open("kaufman.txt", "r") as f:
             for line in f:
+                predict_true = line.split(";")[0].split()[-1]
                 line = line.split()
                 board = chess.Board(" ".join(line[:4]))
-                eval_moves, mate_moves, opponent_mates = self.predict_best_move(board)
-                print(self.predict_look_ahead(board))
-                print(eval_moves)
-                print(mate_moves)
-                print(opponent_mates)
+                print(self.predict_look_ahead(board), predict_true)
+
 
     def predict_fen(self, *args) -> str:
         if len(args) == 0:
@@ -107,7 +104,7 @@ class PlayChess:
         eval_moves, mate_moves, opponent_mates = self.predict_best_move(board)
 
         if len(eval_moves) > 0 or len(mate_moves) > 0:
-            best_moves = set(eval_moves[:6] + mate_moves)
+            best_moves = set(eval_moves[:12] + mate_moves)
         else:
             best_moves = opponent_mates
         for move in best_moves:
@@ -141,7 +138,6 @@ class PlayChess:
             potential_opponent_mates.sort(key=lambda x: x[1], reverse=True)
             potential_eval_moves.sort(key=lambda x: x[1])
 
-        print(potential_mate_moves, potential_eval_moves, potential_opponent_mates, stale_mates)
         if len(potential_mate_moves) > 0:
             return potential_mate_moves[0]
         if len(potential_eval_moves) > 0:
@@ -155,9 +151,14 @@ class PlayChess:
         turn = 1
         while not (board.is_checkmate()):
             if colour == turn:
-                input1 = input("Please give your move: ")
-                board.push_san(input1)
-                colour *= -1
+                while True:
+                    input1 = input("Please give your move: ")
+                    try:
+                        board.push_san(input1)
+                        colour *= -1
+                        break
+                    except ValueError:
+                        print("Invalid move, try again")
             else:
                 model_move = self.predict_look_ahead(board)
                 print(model_move)
@@ -168,7 +169,7 @@ class PlayChess:
 
 def main():
     play_chess = PlayChess()
-    commands = {'kaufmann': play_chess.kaufmann_test,
+    commands = {'kaufman': play_chess.kaufman_test,
                 'predict': play_chess.predict_fen,
                 'predict_look_ahead': play_chess.predict_look_ahead,
                 'play': play_chess.play_game,
@@ -185,6 +186,7 @@ def main():
     args = parser.parse_args()
     func = commands[args.command]
     play_chess.chess_eval.load_model(args.model)
+
     func()
 
 

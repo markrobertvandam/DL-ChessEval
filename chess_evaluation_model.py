@@ -292,4 +292,4 @@ class ChessEvaluationModel:
         self.model.save(model_path)
 
     def load_model(self, model_path: Path) -> None:
-        self.model = models.load_model(model_path)
+        self.model = models.load_model(model_path, compile = False)
