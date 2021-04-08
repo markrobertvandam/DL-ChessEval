@@ -74,7 +74,6 @@ class PlayChess:
                 board = chess.Board(" ".join(line[:4]))
                 print(self.predict_look_ahead(board), predict_true)
 
-
     def predict_fen(self, *args) -> str:
         if len(args) == 0:
             input1 = input("Paste fen-string: ")
@@ -175,7 +174,7 @@ def main():
                 'play': play_chess.play_game,
                 'analyze': play_chess.analyze}
 
-    parser = argparse.ArgumentParser(description="Run Kaufmann test or play chess")
+    parser = argparse.ArgumentParser(description="Run Kaufman test or play chess")
     parser.add_argument(
         "-m", "--model", help="Path to the model", required=True
     )

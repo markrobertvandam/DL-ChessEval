@@ -6,8 +6,6 @@ from typing import Tuple
 
 import numpy as np
 
-from data_processing import DataProcessing
-
 
 def gpu_fix() -> None:
     import tensorflow as tf
@@ -175,12 +173,8 @@ def load_and_slice_data(
 
     attrs = np.concatenate(
         (
-            np.load(args.data / args.eval_attributes)[
-            eval_offset: eval_offset + n_eval
-            ],
-            np.load(args.data / args.mate_attributes)[
-            mate_offset: mate_offset + n_mate
-            ],
+            np.load(args.data / args.eval_attributes)[eval_offset: eval_offset + n_eval],
+            np.load(args.data / args.mate_attributes)[mate_offset: mate_offset + n_mate],
         )
     )
 

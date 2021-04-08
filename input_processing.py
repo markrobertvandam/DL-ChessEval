@@ -298,7 +298,7 @@ def main() -> None:
         "train_percentage",
         type=float,
         default=0.9,
-        help="Set percantage to split train test",
+        help="Set percentage to split train test",
     )
     split_process.add_argument(
         "train_save", type=Path, help="Directory where train data will be saved"
